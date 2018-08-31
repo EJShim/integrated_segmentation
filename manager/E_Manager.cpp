@@ -4,6 +4,10 @@
 #include <vtkCamera.h>
 #include <vtkGenericOpenGLRenderWindow.h>
 #include <vtkRenderWindowInteractor.h>
+#include <vtkProperty2D.h>
+#include <vtkContextScene.h>
+#include <vtkAxis.h>
+
 #include "E_InteractorStyle.h"
 
 
@@ -74,6 +78,45 @@ void E_Manager::SetVTKWidget(QVTKOpenGLWidget* widget, int idx){
     renWin->Render();
 }
 
+void E_Manager::SetHistogramWidget(QVTKOpenGLWidget* widget){
+    //Initialize Renderer and renderwindow
+    m_histogramRenderer = vtkSmartPointer<vtkContextView>::New();
+    vtkSmartPointer<vtkGenericOpenGLRenderWindow> renWin = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
+
+    // Add renderer to renwin
+    m_histogramRenderer->SetRenderWindow(renWin);
+
+
+    // Set Histogram Plot
+    m_histogramPlot = vtkSmartPointer<vtkChartXY>::New();
+    m_histogramRenderer->GetScene()->AddItem(m_histogramPlot);
+    m_histogramPlot->ClearPlots();
+
+    //Init Histogram Plot
+    m_histogramPlot->ForceAxesToBoundsOn();
+    m_histogramPlot->SetAutoAxes(false);
+    m_histogramPlot->SetAutoSize(true);
+    m_histogramPlot->SetHiddenAxisBorder(3);
+
+    for(int i=0 ; i<4 ; i++){
+        m_histogramPlot->GetAxis(i)->SetVisible(false);
+        m_histogramPlot->GetAxis(i)->SetNumberOfTicks(0);
+        m_histogramPlot->GetAxis(i)->SetBehavior(vtkAxis::CUSTOM);
+        m_histogramPlot->GetAxis(i)->SetLabelsVisible(false);
+        m_histogramPlot->GetAxis(i)->SetTitle("Histogram");
+    }
+
+    m_histogramPlot->SetSelectionMethod(vtkChart::SELECTION_ROWS);
+    m_histogramPlot->Update();
+
+
+
+
+    // Add Renwin to widget
+    widget->SetRenderWindow(renWin);
+    renWin->Render();
+}
+
 void E_Manager::Redraw(int idx, bool reset){
 
     if(reset){
@@ -90,5 +133,8 @@ void E_Manager::Redraw(int idx, bool reset){
 void E_Manager::RedrawAll(bool reset){
     for(int i=0 ; i<NUM_VIEW ; i++){
         this->Redraw(i, reset);
-    }           
+    }
+
+    //Update Histogram
+    this->m_histogramRenderer->GetRenderWindow()->Render();
 }

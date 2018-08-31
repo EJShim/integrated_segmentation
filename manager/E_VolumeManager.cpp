@@ -5,6 +5,21 @@
 #include <vtkExtractVOI.h>
 #include <vtkImageData.h>
 
+#include <vtkImageMagnitude.h>
+#include <vtkImageAccumulate.h>
+#include <vtkImageExtractComponents.h>
+#include <vtkImageAccumulate.h>
+#include <vtkIntArray.h>
+#include <vtkFieldData.h>
+#include <vtkBarChartActor.h>
+#include<vtkLegendBoxActor.h>
+
+#include <vtkFloatArray.h>
+#include <vtkTable.h>
+#include <vtkPlot.h>
+#include <vtkChartXY.h>
+#include <vtkAxis.h>
+
 #include <itkNiftiImageIO.h>
 #include "tensorflow/core/framework/tensor.h"
 
@@ -106,6 +121,8 @@ void E_VolumeManager::ImportDicom(const char* path){
         // E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->RemoveViewProp(m_volume);
         // E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume);        
     }
+
+    UpdateHistogram();
 
     E_Manager::Mgr()->RedrawAll(true);
 
@@ -273,4 +290,60 @@ void E_VolumeManager::MakeBlankGroundTruth(){
 void E_VolumeManager::UpdateVolume(vtkSmartPointer<vtkVolume> volume){
     E_Manager::Mgr()->GetRenderer(0)->RemoveViewProp(volume);
     E_Manager::Mgr()->GetRenderer(0)->AddViewProp(volume);
+}
+
+void E_VolumeManager::UpdateHistogram(){
+
+    std::cout << "Update Histogram" << std::endl;
+    vtkSmartPointer<vtkImageData> imageData = m_volume->GetImageData();
+    vtkSmartPointer<vtkChartXY> chart = E_Manager::Mgr()->GetHistogramPlot();
+    chart->ClearPlots();
+
+    double scalarRange[2];
+    imageData->GetScalarRange(scalarRange);
+    int minHU = scalarRange[0];
+    int maxHU = scalarRange[1];
+
+    vtkSmartPointer<vtkImageAccumulate> histogram = vtkSmartPointer<vtkImageAccumulate>::New();
+    histogram->SetInputData(imageData);
+    histogram->SetComponentExtent(0, maxHU-minHU-1, 0, 0, 0, 0);
+    histogram->SetComponentOrigin(minHU, 0, 0);
+    histogram->SetComponentSpacing(1, 0, 0);
+    histogram->Update();
+
+    //add histogram to table
+    vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+    vtkSmartPointer<vtkIntArray> intArr = vtkSmartPointer<vtkIntArray>::New();
+    vtkSmartPointer<vtkFloatArray> floatArr = vtkSmartPointer<vtkFloatArray>::New();
+
+    intArr->SetName("scalar");
+    floatArr->SetName("histogram");
+    table->AddColumn(intArr);
+    table->AddColumn(floatArr);
+
+    int numRow = (int)(maxHU-minHU);
+    table->SetNumberOfRows(numRow);
+
+    for(int i=0 ; i<numRow; i++){
+        float val = histogram->GetOutput()->GetScalarComponentAsFloat(i, 0, 0, 0);
+        table->SetValue(i, 0, i + minHU);
+        table->SetValue(i, 1, val + 1);
+    }
+
+    vtkSmartPointer<vtkPlot> line;
+    line = chart->AddPlot( vtkChart::STACKED);
+    line->SetInputData(table, 0, 1);
+    line->SetColor(255, 0, 0, 255);
+    line->Update();
+
+    double hisRange[2];
+    histogram->GetOutput()->GetScalarRange(hisRange);
+
+    chart->GetAxis(vtkAxis::BOTTOM)->SetRange(minHU, maxHU);
+    chart->GetAxis(vtkAxis::BOTTOM)->Update();
+    chart->GetAxis(vtkAxis::LEFT)->SetRange(1, hisRange[1]+1);
+    chart->GetAxis(vtkAxis::LEFT)->LogScaleOn();
+    chart->GetAxis(vtkAxis::LEFT)->Update();
+
+
 }

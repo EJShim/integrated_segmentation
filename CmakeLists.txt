@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.3)
 
-PROJECT(lit_seg)
+PROJECT(mandseg)
 
 set(CMAKE_AUTOMOC ON)
 set(CMAKE_AUTORCC ON)

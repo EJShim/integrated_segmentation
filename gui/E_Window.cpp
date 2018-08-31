@@ -7,6 +7,8 @@
 #include <QFileInfo>
 #include <QTimer>
 #include <QThread>
+#include <QDockWidget>
+#include <QListWidget>
 
 E_Window::E_Window(QWidget* parent):QMainWindow(parent){
     //Show in maximum size
@@ -16,6 +18,9 @@ E_Window::E_Window(QWidget* parent):QMainWindow(parent){
     
     //Initialize Central WIdget    
     this->setCentralWidget(this->InitCentralWidget());
+
+    // Add Dock widget
+    this->CreateDockWindows();
 
     m_segmentationThread = NULL;
 
@@ -107,6 +112,54 @@ QWidget* E_Window::InitCentralWidget(){
 
 
     return centralWidget;
+}
+
+
+void E_Window::CreateDockWindows(){
+    QDockWidget* histWidget = new QDockWidget("histogram", this);
+    histWidget->setAllowedAreas(Qt::RightDockWidgetArea);
+
+    //Create Histogram Widget
+    m_histogramWidget = new QVTKOpenGLWidget();
+    E_Manager::Mgr()->SetHistogramWidget(m_histogramWidget);
+    histWidget->setWidget(m_histogramWidget);
+    
+
+    // Add To Mainwindow
+    this->addDockWidget(Qt::RightDockWidgetArea, histWidget);
+
+
+
+    // Test Another Dock Widget
+    QDockWidget* testWidget = new QDockWidget("test widget", this);
+    testWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+
+    QListWidget* listWidget = new QListWidget();
+    listWidget->addItems(QStringList()
+            << "Thank you for your payment which we have received today."
+            << "Your order has been dispatched and should be with you "
+               "within 28 days."
+            << "We have dispatched those items that were in stock. The "
+               "rest of your order will be dispatched once all the "
+               "remaining items have arrived at our warehouse. No "
+               "additional shipping charges will be made."
+            << "You made a small overpayment (less than $5) which we "
+               "will keep on account for you, or return at your request."
+            << "You made a small underpayment (less than $1), but we have "
+               "sent your order anyway. We'll add this underpayment to "
+               "your next bill."
+            << "Unfortunately you did not send enough money. Please remit "
+               "an additional $. Your order will be dispatched as soon as "
+               "the complete amount has been received."
+            << "You made an overpayment (more than $5). Do you wish to "
+               "buy more items, or should we return the excess to you?"   
+    );
+    testWidget->setWidget(listWidget);
+
+    //Add To MainWindow
+    this->addDockWidget(Qt::RightDockWidgetArea, testWidget);
+
+
 }
 
 

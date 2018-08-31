@@ -1,6 +1,9 @@
 #include <QVTKOpenGLWidget.h>
 #include <vtkSmartPointer.h>
 #include <vtkRenderer.h>
+#include <vtkContextView.h>
+#include <vtkChartXY.h>
+
 
 #include "E_VolumeManager.h"
 
@@ -29,15 +32,24 @@ class E_Manager{
     void ClearMemory();
 
     vtkRenderer* GetRenderer(int idx){return this->m_renderer[idx];}
+    vtkChartXY* GetHistogramPlot(){return this->m_histogramPlot;}
 
     //Initialize VTK Widgets
     void SetVTKWidget(QVTKOpenGLWidget* widget, int idx);
+
+    ///Initialize Histogram Widget
+    void SetHistogramWidget(QVTKOpenGLWidget* widget);
 
     void Redraw(int idx, bool reset=false);
     void RedrawAll(bool reset=false);
 
 
     protected:
-    vtkSmartPointer<vtkRenderer> m_renderer[NUM_VIEW];    
+    //Renderer
+    vtkSmartPointer<vtkRenderer> m_renderer[NUM_VIEW];
+
+    //Histogram
+    vtkSmartPointer<vtkContextView> m_histogramRenderer;
+    vtkSmartPointer<vtkChartXY> m_histogramPlot;
     
 };

@@ -53,6 +53,7 @@ class E_VolumeManager{
 
     /// Because of bug
     void UpdateVolume(vtkSmartPointer<vtkVolume> volume);
+    void UpdateHistogram();
 
     vtkSmartPointer<E_Volume> GetCurrentVolume(){return m_volume;}
 

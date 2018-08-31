@@ -19,7 +19,11 @@ class E_Window : public QMainWindow{
     ~E_Window();
     
     protected:
+    ///Rendering Widget
     QVTKOpenGLWidget* m_renderingWidget[E_Manager::NUM_VIEW];
+
+    ///Histogram Widget
+    QVTKOpenGLWidget* m_histogramWidget;
 
     ///Checkboxex for 3d slice
     QCheckBox* m_checkboxAxl;
@@ -30,6 +34,7 @@ class E_Window : public QMainWindow{
     QToolBar* InitToolbar();
     QWidget* InitCentralWidget();
     QGroupBox* Init3DSliceGroup();
+    void CreateDockWindows();
 
     E_SegmentationThread* m_segmentationThread;
 
