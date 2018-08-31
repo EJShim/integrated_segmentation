@@ -1,0 +1,66 @@
+cmake_minimum_required(VERSION 3.3)
+
+PROJECT(lit_seg)
+
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+set(CMAKE_BUILD_TYPE Release)
+set(PUBLISH FALSE)
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/bin)
+
+set(SRC_FILES 
+    main
+    resources/resources.qrc
+    gui/E_Window.cpp
+    manager/E_Manager.cpp
+    manager/E_VolumeManager.cpp
+    manager/E_InteractorStyle.cpp
+    thread/E_SegmentationThread.cpp
+)
+
+include_directories(
+    gui/    
+    manager/
+    core/
+    thread/
+)
+
+if (WIN32)
+    add_definitions( -DCOMPILER_MSVC)
+    add_definitions( -DNOMINMAX)
+endif(WIN32)
+
+#ADD EXECUTABLE
+if(${PUBLISH})
+    if (WIN32)
+        add_executable(${PROJECT_NAME} WIN32 ${SRC_FILES})
+    endif (WIN32)
+    if (APPLE)
+        set(MACOSX_BUNDLE_ICON_FILE pantone-2.icns)
+        set(myApp_ICON ${CMAKE_CURRENT_SOURCE_DIR}/resources/icons/pantone-2.icns)
+        set_source_files_properties(${myApp_ICON} PROPERTIES MACOSX_PACKAGE_LOCATION "Resources")
+        add_executable(run MACOSX_BUNDLE ${myApp_ICON} ${SRC_FILES})
+    endif (APPLE)
+else(${PUBLISH})
+    add_executable(${PROJECT_NAME} ${myApp_ICON} ${SRC_FILES})
+endif(${PUBLISH})
+
+
+#Link Internal Libraries
+add_subdirectory(core)
+target_link_libraries(${PROJECT_NAME} Core)
+
+#Link External Libraries-VTK
+find_package(VTK REQUIRED)
+include(${VTK_USE_FILE})
+target_link_libraries(${PROJECT_NAME} ${VTK_LIBRARIES})
+
+
+find_package(ITK REQUIRED)
+include(${ITK_USE_FILE})
+target_link_libraries(${PROJECT_NAME} ${ITK_LIBRARIES})
+
+find_package(Tensorflow)
+target_link_libraries(${PROJECT_NAME} tensorflow)
+

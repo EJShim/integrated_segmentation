@@ -1,0 +1,8 @@
+<!DOCTYPE RCC><RCC version="1.0">
+    <qresource>
+        <file>images/document.png</file>
+        <file>images/edit-tools.png</file>
+        <file>images/pantone-2.png</file>
+        <file>styles/black.css</file>
+    </qresource>
+</RCC>
