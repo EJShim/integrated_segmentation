@@ -11,6 +11,7 @@
 #include <vtkCallbackCommand.h>
 #include "E_InteractorStyle.h"
 #include "E_ContextInteractorStyle.h"
+#include <vtkContextMouseEvent.h>
 
 E_Manager::E_Manager(){
     this->Initialize();
@@ -86,13 +87,11 @@ void E_Manager::SetHistogramWidget(QVTKOpenGLWidget* widget){
 
     //Initialize Render WIndow and Interactor Style
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> renWin = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
-    vtkSmartPointer<vtkRenderWindowInteractor> interactor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
     vtkSmartPointer<E_ContextInteractorStyle> interactorstyle = vtkSmartPointer<E_ContextInteractorStyle>::New();    
-    interactor->SetInteractorStyle(interactorstyle);
-    renWin->SetInteractor(interactor);
-
+    
     // Add renderer to renwin
     m_histogramRenderer->SetRenderWindow(renWin);
+    m_histogramRenderer->GetRenderWindow()->GetInteractor()->SetInteractorStyle(interactorstyle);
 
 
     // Set Histogram Plot
