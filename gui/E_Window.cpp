@@ -1,14 +1,13 @@
 #include "E_Window.h"
 
 #include <iostream>
+#include <E_DicomSeries.h>
 #include <QGridLayout>
 #include <QAction>
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QTimer>
 #include <QThread>
-#include <QDockWidget>
-#include <QListWidget>
 
 E_Window::E_Window(QWidget* parent):QMainWindow(parent){
     //Show in maximum size
@@ -116,52 +115,93 @@ QWidget* E_Window::InitCentralWidget(){
 
 
 void E_Window::CreateDockWindows(){
-    QDockWidget* histWidget = new QDockWidget("histogram", this);
-    histWidget->setAllowedAreas(Qt::RightDockWidgetArea);
+
+    //////////Volume Tree Widget
+    m_volumeTreeDocker = new QDockWidget("Patient Series", this);
+    m_volumeTreeDocker->setAllowedAreas(Qt::LeftDockWidgetArea);
+    this->addDockWidget(Qt::LeftDockWidgetArea, m_volumeTreeDocker);
+
+
+    m_volumeTreeWidget = new QTreeWidget(this);
+    m_volumeTreeWidget->setHeaderHidden(true);
+    m_volumeTreeWidget->setSortingEnabled(false);
+    m_volumeTreeWidget->setAlternatingRowColors(true);
+    m_volumeTreeWidget->setSelectionBehavior(QAbstractItemView::SelectItems);
+    m_volumeTreeDocker->setWidget(m_volumeTreeWidget);
+    connect(m_volumeTreeWidget, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(onItemDoubleClicked(QTreeWidgetItem*, int)));
+
+
+
+
+    //////////// Volume Info Widget
+
+
+
+
+
+
+
+    /////// Histogram Widget
+    m_histDocker = new QDockWidget("histogram", this);
+    m_histDocker->setAllowedAreas(Qt::RightDockWidgetArea);
 
     //Create Histogram Widget
     m_histogramWidget = new QVTKOpenGLWidget();
     E_Manager::Mgr()->SetHistogramWidget(m_histogramWidget);
-    histWidget->setWidget(m_histogramWidget);
+    m_histDocker->setWidget(m_histogramWidget);
     
 
     // Add To Mainwindow
-    this->addDockWidget(Qt::RightDockWidgetArea, histWidget);
+    this->addDockWidget(Qt::RightDockWidgetArea, m_histDocker);
 
 
 
     // Test Another Dock Widget
-    QDockWidget* testWidget = new QDockWidget("test widget", this);
-    testWidget->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
+    m_logDocker = new QDockWidget("log", this);
+    m_logDocker->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
 
-    QListWidget* listWidget = new QListWidget();
-    listWidget->addItems(QStringList()
-            << "Thank you for your payment which we have received today."
-            << "Your order has been dispatched and should be with you "
-               "within 28 days."
-            << "We have dispatched those items that were in stock. The "
-               "rest of your order will be dispatched once all the "
-               "remaining items have arrived at our warehouse. No "
-               "additional shipping charges will be made."
-            << "You made a small overpayment (less than $5) which we "
-               "will keep on account for you, or return at your request."
-            << "You made a small underpayment (less than $1), but we have "
-               "sent your order anyway. We'll add this underpayment to "
-               "your next bill."
-            << "Unfortunately you did not send enough money. Please remit "
-               "an additional $. Your order will be dispatched as soon as "
-               "the complete amount has been received."
-            << "You made an overpayment (more than $5). Do you wish to "
-               "buy more items, or should we return the excess to you?"   
+    m_logWidget = new QListWidget();
+    m_logWidget->addItems(QStringList()
+            << "Debugger Log"
     );
-    testWidget->setWidget(listWidget);
+    m_logDocker->setWidget(m_logWidget);
 
     //Add To MainWindow
-    this->addDockWidget(Qt::RightDockWidgetArea, testWidget);
-
+    this->addDockWidget(Qt::RightDockWidgetArea, m_logDocker);
 
 }
 
+
+void E_Window::UpdateVolumeTree(){
+    //Clear
+    m_volumeTreeWidget->clear();
+
+    std::vector<E_DicomSeries*> patientSeries = E_Manager::VolumeMgr()->GetVolumeList();
+
+
+    for(int i=0 ; i<patientSeries.size() ; i++){
+
+        ///top level
+        E_DicomSeries* toplevelData = patientSeries[i];
+        QTreeWidgetItem* toplevelItem = new QTreeWidgetItem();
+        
+        toplevelItem->setText(0, toplevelData->GetStudyDescription().c_str());
+        toplevelItem->setBackground(0, QBrush(QColor("green")));
+        
+        m_volumeTreeWidget->addTopLevelItem(toplevelItem);
+
+
+
+        ///Add Children
+        for(int j=0 ; j<toplevelData->GetNumberOfSerieses() ; j++){
+            QTreeWidgetItem* childItem = new QTreeWidgetItem();
+            childItem->setText(0, toplevelData->GetSeriesDescriptions()[j].c_str());
+            toplevelItem->addChild(childItem);
+        }
+    }
+
+    m_volumeTreeWidget->expandAll();
+}
 
 
 ////////////////////////////////////////////////////////////////////Action SLOTS////////////////////////////////////////////////////////
@@ -179,9 +219,10 @@ void E_Window::ImportVolume(){
         E_Manager::VolumeMgr()->ImportNII(fileName.toLocal8Bit().data());
     }
     else if(ext == "dcm"){
-        std::cout << "import dicom " << std::endl;
         QDir directoryPath = info.dir();
         E_Manager::VolumeMgr()->ImportDicom(directoryPath.absolutePath().toLocal8Bit().data());
+
+        UpdateVolumeTree();
     }
 
 }
@@ -258,3 +299,17 @@ void E_Window::OnTimeOut(){
     E_Manager::Mgr()->Redraw(0);
     E_Manager::Mgr()->Redraw(3);
 }
+
+
+ void E_Window::onItemDoubleClicked(QTreeWidgetItem* item, int column){
+
+    if(item->parent() == NULL){
+        return;
+    }
+
+    int parentIdx = m_volumeTreeWidget->indexOfTopLevelItem(item->parent());
+    int childIdx = item->parent()->indexOfChild(item);
+
+    E_Manager::VolumeMgr()->AddSelectedVolume(parentIdx, childIdx);
+ }
+

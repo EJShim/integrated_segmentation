@@ -81,6 +81,8 @@ void E_Manager::SetVTKWidget(QVTKOpenGLWidget* widget, int idx){
 void E_Manager::SetHistogramWidget(QVTKOpenGLWidget* widget){
     //Initialize Renderer and renderwindow
     m_histogramRenderer = vtkSmartPointer<vtkContextView>::New();
+    m_histogramRenderer->GetRenderer()->SetBackground(0.0, 0.0, 0.0);
+
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> renWin = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
 
     // Add renderer to renwin

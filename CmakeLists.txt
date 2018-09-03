@@ -17,6 +17,7 @@ set(SRC_FILES
     manager/E_VolumeManager.cpp
     manager/E_InteractorStyle.cpp
     thread/E_SegmentationThread.cpp
+    etc/E_DicomSeries.cpp
 )
 
 include_directories(
@@ -24,6 +25,7 @@ include_directories(
     manager/
     core/
     thread/
+    etc/
 )
 
 if (WIN32)

@@ -23,7 +23,6 @@
 #include <itkNiftiImageIO.h>
 #include "tensorflow/core/framework/tensor.h"
 
-#include "itkGDCMImageIO.h"
 #include "itkGDCMSeriesFileNames.h"
 
 
@@ -40,92 +39,85 @@ E_VolumeManager::~E_VolumeManager(){
 
 }
 void E_VolumeManager::ImportDicom(const char* path){
-    std::cout << "Import Dicoms from " << path << std::endl;
 
+    E_DicomSeries* series = new E_DicomSeries();
+    series->SetPath(path);
+    m_patientList.push_back(series);
+
+    return;
+
+    // std::string studyDescription = "";
+
+    // while (seriesItr != seriesEnd)
+    // {
+    //     std::vector<std::string> fileNames = nameGenerator->GetFileNames(seriesItr->c_str());
+
+    //     ///Define Reader
+    //     DicomReader::Pointer reader = DicomReader::New();
+    //     ImageIOType::Pointer dicomIO = ImageIOType::New();
+    //     reader->SetImageIO(dicomIO);        
+    //     reader->SetFileNames(fileNames);
+    //     reader->Update();
+
+
+    //     ///Get Study Description
+    //     if(studyDescription.length() == 0){
+    //         studyDescription = GetDicomTag(dicomIO, "0008|1030");
+    //         series->setText(0, studyDescription.c_str());
+    //     }
+    //     // std::string seriesDescription = GetDicomTag(dicomIO, "0008|103e");
+    //     // std::cout << seriesDescription << "(" <<  fileNames.size() << ")" << std::endl;
+
+
+    //     imageDataList.push_back(reader);
+
+    //     ++seriesItr;
+    // }
+
+    // m_patientList.push_back(series);
+
+    // ///////////////////Test Volume, from here, refactoring needed! ///////////////////////////////////////////
+    // ImageType::Pointer itkImageData = imageDataList[1]->GetOutput();
+
+
+    // ///Add Orientation
+    // OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
+    // orienter->UseImageDirectionOn();
+    // orienter->SetInput(itkImageData);
+    // orienter->Update();
+
+    // // Convert to vtkimagedataclear
+    // itkVtkConverter::Pointer conv = itkVtkConverter::New();
+    // conv->SetInput(orienter->GetOutput());
+    // conv->Update();
+
+    // double scalarRange[2];
+    // conv->GetOutput()->GetScalarRange(scalarRange);
+    // std::cout << "scalar Range : " << scalarRange[0] << "," << scalarRange[1] << std::endl;
+
+    //   //Make Volume
+    // if(m_volume == NULL){
+    //     m_volume = vtkSmartPointer<E_Volume>::New();        
+    // }
+    // m_volume->SetImageData(conv->GetOutput());
     
 
-    typedef itk::GDCMImageIO ImageIOType;
-
-    typedef itk::GDCMSeriesFileNames NamesGeneratorType;    
-    NamesGeneratorType::Pointer nameGenerator = NamesGeneratorType::New();
-    nameGenerator->SetUseSeriesDetails(true);
-    nameGenerator->AddSeriesRestriction("0008|0021");
-    nameGenerator->SetDirectory(path);
-
-    typedef std::vector<std::string> SeriesIdContainer;
-    const SeriesIdContainer & seriesUID = nameGenerator->GetSeriesUIDs();
-    SeriesIdContainer::const_iterator seriesItr = seriesUID.begin();
-    SeriesIdContainer::const_iterator seriesEnd = seriesUID.end();
-
-
-    std::vector<DicomReader::Pointer> imageDataList; 
-
-    while (seriesItr != seriesEnd)
-    {
-        std::vector<std::string> fileNames = nameGenerator->GetFileNames(seriesItr->c_str());
-
-        std::cout << fileNames.size() << std::endl;
-
-        ///Define Reader
-        DicomReader::Pointer reader = DicomReader::New();
-        ImageIOType::Pointer dicomIO = ImageIOType::New();
-        reader->SetImageIO(dicomIO);        
-        reader->SetFileNames(fileNames);
-        reader->Update();
-
-        imageDataList.push_back(reader);
-
-        ++seriesItr;
-    }
-
-    std::cout << "Number of Sereises : " << imageDataList.size() << std::endl;
-
-
-    ///////////////////Test Volume, from here, refactoring needed! ///////////////////////////////////////////
-    ImageType::Pointer itkImageData = imageDataList[1]->GetOutput();
-
-
-    ///Add Orientation
-    OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
-    orienter->UseImageDirectionOn();
-    orienter->SetInput(itkImageData);
-    orienter->Update();
-
-    // Convert to vtkimagedataclear
-    itkVtkConverter::Pointer conv = itkVtkConverter::New();
-    conv->SetInput(orienter->GetOutput());
-    conv->Update();
-
-    double scalarRange[2];
-    conv->GetOutput()->GetScalarRange(scalarRange);
-    std::cout << "scalar Range : " << scalarRange[0] << "," << scalarRange[1] << std::endl;
-
-      //Make Volume
-    if(m_volume == NULL){
-        m_volume = vtkSmartPointer<E_Volume>::New();        
-    }
-    m_volume->SetImageData(conv->GetOutput());
-    
-
-    if(!m_bVolumeInRenderer){
-        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume);
-        for(int i=0 ; i<NUMSLICE ; i++){
-            vtkSmartPointer<vtkImageSlice> slice = m_volume->GetImageSlice(i);
-            E_Manager::Mgr()->GetRenderer(i+1)->AddViewProp(slice);
-        }
+    // if(!m_bVolumeInRenderer){
+    //     E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume);
+    //     for(int i=0 ; i<NUMSLICE ; i++){
+    //         vtkSmartPointer<vtkImageSlice> slice = m_volume->GetImageSlice(i);
+    //         E_Manager::Mgr()->GetRenderer(i+1)->AddViewProp(slice);
+    //     }
         
-        m_bVolumeInRenderer = true;
-    }
-    else{
-        UpdateVolume(m_volume);
-        // E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->RemoveViewProp(m_volume);
-        // E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume);        
-    }
+    //     m_bVolumeInRenderer = true;
+    // }
+    // else{
+    //     UpdateVolume(m_volume);
+    // }
 
-    UpdateHistogram();
+    // UpdateHistogram();
 
-    E_Manager::Mgr()->RedrawAll(true);
-
+    // E_Manager::Mgr()->RedrawAll(true);
 }
 
 
@@ -166,8 +158,6 @@ void E_VolumeManager::ImportNII(const char* path){
     }
     else{
         UpdateVolume(m_volume);
-        // E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->RemoveViewProp(m_volume);
-        // E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume);        
     }
 
     E_Manager::Mgr()->RedrawAll(true);
@@ -293,8 +283,7 @@ void E_VolumeManager::UpdateVolume(vtkSmartPointer<vtkVolume> volume){
 }
 
 void E_VolumeManager::UpdateHistogram(){
-
-    std::cout << "Update Histogram" << std::endl;
+    return;
     vtkSmartPointer<vtkImageData> imageData = m_volume->GetImageData();
     vtkSmartPointer<vtkChartXY> chart = E_Manager::Mgr()->GetHistogramPlot();
     chart->ClearPlots();
@@ -344,6 +333,62 @@ void E_VolumeManager::UpdateHistogram(){
     chart->GetAxis(vtkAxis::LEFT)->SetRange(1, hisRange[1]+1);
     chart->GetAxis(vtkAxis::LEFT)->LogScaleOn();
     chart->GetAxis(vtkAxis::LEFT)->Update();
+}
 
 
+void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
+
+    ///Add Orientation
+    OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
+    orienter->UseImageDirectionOn();
+    orienter->SetInput(itkImageData);
+    orienter->Update();
+
+    // Convert to vtkimagedataclear
+    itkVtkConverter::Pointer conv = itkVtkConverter::New();
+    conv->SetInput(orienter->GetOutput());
+    conv->Update();
+
+    double scalarRange[2];
+    conv->GetOutput()->GetScalarRange(scalarRange);
+    std::cout << "scalar Range : " << scalarRange[0] << "," << scalarRange[1] << std::endl;
+
+      //Make Volume
+    if(m_volume == NULL){
+        m_volume = vtkSmartPointer<E_Volume>::New();        
+    }
+    m_volume->SetImageData(conv->GetOutput());
+    
+
+    if(!m_bVolumeInRenderer){
+        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume);
+        for(int i=0 ; i<NUMSLICE ; i++){
+            vtkSmartPointer<vtkImageSlice> slice = m_volume->GetImageSlice(i);
+            E_Manager::Mgr()->GetRenderer(i+1)->AddViewProp(slice);
+        }
+        
+        m_bVolumeInRenderer = true;
+    }
+    else{
+        UpdateVolume(m_volume);
+    }
+
+    UpdateHistogram();
+    E_Manager::Mgr()->RedrawAll(true);
+}
+
+void E_VolumeManager::AddSelectedVolume(int patientIdx, int seriesIdx){
+    if(m_patientList.size() < patientIdx + 1 ){
+        return;
+    }
+
+    if(m_patientList[patientIdx]->GetNumberOfSerieses() < seriesIdx+1){
+        return;
+    }
+
+    ///Get Image Container from dicom group
+    DicomReader::Pointer container = m_patientList[patientIdx]->GetImageContainer()[seriesIdx];
+
+    //Add To Renderer
+    AddVolume(container->GetOutput());
 }

@@ -3,11 +3,14 @@
 #include <QVTKOpenGLWidget.h>
 #include <QGroupBox>
 #include <QCheckBox>
-
+#include <QDockWidget>
+#include <QListWidget>
+#include <QTreeWidget>
 #include "tensorflow/core/framework/tensor.h"
 
 #include "E_Manager.h"
 #include "E_SegmentationThread.h"
+
 
 
 
@@ -22,13 +25,26 @@ class E_Window : public QMainWindow{
     ///Rendering Widget
     QVTKOpenGLWidget* m_renderingWidget[E_Manager::NUM_VIEW];
 
-    ///Histogram Widget
-    QVTKOpenGLWidget* m_histogramWidget;
 
     ///Checkboxex for 3d slice
     QCheckBox* m_checkboxAxl;
     QCheckBox* m_checkboxCor;
     QCheckBox* m_checkboxSag;
+
+
+    ///Volume Tree Widget
+    QDockWidget* m_volumeTreeDocker;
+    QTreeWidget* m_volumeTreeWidget;
+    
+
+
+    /// Histogram Widget
+    QDockWidget* m_histDocker;
+    QVTKOpenGLWidget* m_histogramWidget;
+
+    ///Log Widget
+    QDockWidget* m_logDocker;
+    QListWidget* m_logWidget;
 
     protected:
     QToolBar* InitToolbar();
@@ -37,6 +53,12 @@ class E_Window : public QMainWindow{
     void CreateDockWindows();
 
     E_SegmentationThread* m_segmentationThread;
+
+
+    public:
+
+    ///Update Volume Tree
+    void UpdateVolumeTree();
 
 
 
@@ -53,5 +75,8 @@ class E_Window : public QMainWindow{
     void ToggleSagSlice(int state);
     ///temporary
     void ImportGT();
+
+    ///Tree Widget
+    void onItemDoubleClicked(QTreeWidgetItem* item, int column);
     
 };
