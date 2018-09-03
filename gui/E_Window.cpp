@@ -1,5 +1,6 @@
 #include "E_Window.h"
-
+#include <QApplication>
+#include <QDesktopWidget>
 #include <iostream>
 #include <E_DicomSeries.h>
 #include <QGridLayout>
@@ -8,6 +9,7 @@
 #include <QFileInfo>
 #include <QTimer>
 #include <QThread>
+#include <math.h>
 
 E_Window::E_Window(QWidget* parent):QMainWindow(parent){
     // Initialize toolbar
@@ -29,9 +31,14 @@ E_Window::~E_Window(){
 }
 
 QToolBar* E_Window::InitToolbar(){
+
+    QRect rec = QApplication::desktop()->screenGeometry();
+    int height = rec.height();
+    int width = rec.width();
+    int iconSize = sqrt(pow(height, 2) + pow(width, 2)) / 50;
     //Initialize Toolbar
     QToolBar* toolbar = new QToolBar();
-    toolbar->setIconSize(QSize(50, 50));
+    toolbar->setIconSize(QSize(iconSize, iconSize));
     toolbar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
     toolbar->setMovable(false);    
 
@@ -87,13 +94,15 @@ QWidget* E_Window::InitCentralWidget(){
     for(int i=0 ; i<E_Manager::NUM_VIEW ; i++){
         this->m_renderingWidget[i] = new QVTKOpenGLWidget();        
         E_Manager::Mgr()->SetVTKWidget(this->m_renderingWidget[i],i);
+
+
+        #ifdef __APPLE__
+            //Force to use GL>3.2,, mac default is 2.1
+            QSurfaceFormat::setDefaultFormat(m_renderingWidget[i]->defaultFormat());
+            m_renderingWidget[i]->setFormat(m_renderingWidget[i]->defaultFormat());        
+        #endif
     }
 
-    #ifdef __APPLE__
-        //Force to use GL>3.2,, mac default is 2.1
-        QSurfaceFormat::setDefaultFormat(widget->defaultFormat());
-        widget->setFormat(widget->defaultFormat());        
-    #endif
     
     
     // Initialize Central Widgets
@@ -142,7 +151,7 @@ void E_Window::CreateDockWindows(){
 
     /////// Histogram Widget
     m_histDocker = new QDockWidget("histogram", this);
-    m_histDocker->setAllowedAreas(Qt::RightDockWidgetArea);
+    m_histDocker->setAllowedAreas(Qt::RightDockWidgetArea | Qt::LeftDockWidgetArea);
 
     //Create Histogram Widget
     m_histogramWidget = new QVTKOpenGLWidget();
@@ -151,7 +160,7 @@ void E_Window::CreateDockWindows(){
     
 
     // Add To Mainwindow
-    this->addDockWidget(Qt::RightDockWidgetArea, m_histDocker);
+    this->addDockWidget(Qt::LeftDockWidgetArea, m_histDocker);
 
 
 
@@ -160,7 +169,7 @@ void E_Window::CreateDockWindows(){
     m_logDocker->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
     E_Manager::Mgr()->SetLogWidget(m_logDocker);
     //Add To MainWindow
-    this->addDockWidget(Qt::RightDockWidgetArea, m_logDocker);
+    this->addDockWidget(Qt::LeftDockWidgetArea, m_logDocker);
 }
 
 

@@ -2,6 +2,7 @@ QWidget
 {
     color: #b1b1b1;
     background-color: #323232;
+    spacing: 0px;
 }
 QListView {    
     alternate-background-color: #434343;
@@ -15,6 +16,8 @@ QListWidget{
 QTreeView { 
     alternate-background-color: #434343;
 }
+
+
 QProgressBar
 {
     border: 2px solid grey;
