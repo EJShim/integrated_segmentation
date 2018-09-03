@@ -9,7 +9,6 @@
 #include <itkImageSeriesReader.h>
 #include <itkImageToVTKImageFilter.h>
 #include <itkOrientImageFilter.h>
-#include "itkGDCMImageIO.h"
 #include <E_DicomSeries.h>
 
 #include "E_Volume.h"
@@ -25,7 +24,6 @@ class E_VolumeManager{
     typedef itk::ImageSeriesReader<ImageType> DicomReader;
     typedef itk::ImageToVTKImageFilter<ImageType> itkVtkConverter;
     typedef itk::OrientImageFilter<ImageType, ImageType> OrientImageFilterType;
-    typedef itk::GDCMImageIO ImageIOType;
 
 
 
@@ -73,7 +71,6 @@ class E_VolumeManager{
 
     ///Get Volume List
     std::vector<E_DicomSeries*> &GetVolumeList(){return m_patientList;}
-
 
 };
 

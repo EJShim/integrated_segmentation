@@ -7,6 +7,11 @@ QListView {
     alternate-background-color: #434343;
 }
 
+QListWidget{
+    background-color: #000000;
+    color: #1a80d7;
+}
+
 QTreeView { 
     alternate-background-color: #434343;
 }

@@ -7,9 +7,10 @@
 #include <vtkProperty2D.h>
 #include <vtkContextScene.h>
 #include <vtkAxis.h>
-
+#include <vtkCommand.h>
+#include <vtkCallbackCommand.h>
 #include "E_InteractorStyle.h"
-
+#include "E_ContextInteractorStyle.h"
 
 E_Manager::E_Manager(){
     this->Initialize();
@@ -83,7 +84,12 @@ void E_Manager::SetHistogramWidget(QVTKOpenGLWidget* widget){
     m_histogramRenderer = vtkSmartPointer<vtkContextView>::New();
     m_histogramRenderer->GetRenderer()->SetBackground(0.0, 0.0, 0.0);
 
+    //Initialize Render WIndow and Interactor Style
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> renWin = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
+    vtkSmartPointer<vtkRenderWindowInteractor> interactor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
+    vtkSmartPointer<E_ContextInteractorStyle> interactorstyle = vtkSmartPointer<E_ContextInteractorStyle>::New();    
+    interactor->SetInteractorStyle(interactorstyle);
+    renWin->SetInteractor(interactor);
 
     // Add renderer to renwin
     m_histogramRenderer->SetRenderWindow(renWin);
@@ -139,4 +145,23 @@ void E_Manager::RedrawAll(bool reset){
 
     //Update Histogram
     this->m_histogramRenderer->GetRenderWindow()->Render();
+}
+
+void E_Manager::SetLogWidget(QDockWidget* widgetDocker){
+    m_logWidget = new QListWidget();
+    widgetDocker->setWidget(m_logWidget);
+}
+
+void E_Manager::SetLog(const char *arg, ...){
+    va_list arguments;
+
+    QStringList list;
+    for (va_start(arguments, arg); arg != NULL; arg = va_arg(arguments, const char *)) {
+        list << arg;
+    }
+    
+    m_logWidget->addItems(list);
+
+
+    va_end(arguments);
 }

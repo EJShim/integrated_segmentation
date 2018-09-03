@@ -68,6 +68,9 @@ class E_Volume : public vtkVolume{
     void ForwardSlice(int idx);
     void BackwardSlice(int idx);
 
+    //Get Color and Opacity Function
+    vtkSmartPointer<vtkColorTransferFunction> GetColorTransferFunction(){ return m_colorFunction;}
+    vtkSmartPointer<vtkPiecewiseFunction> GetOpacityTransferFunction(){return m_opacityFunction; }
 };
 
 #endif //E_VOLUME_H

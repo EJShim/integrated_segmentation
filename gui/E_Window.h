@@ -44,7 +44,6 @@ class E_Window : public QMainWindow{
 
     ///Log Widget
     QDockWidget* m_logDocker;
-    QListWidget* m_logWidget;
 
     protected:
     QToolBar* InitToolbar();

@@ -1,4 +1,6 @@
 #include <QVTKOpenGLWidget.h>
+#include <QDockWidget>
+#include <QListWidget>
 #include <vtkSmartPointer.h>
 #include <vtkRenderer.h>
 #include <vtkContextView.h>
@@ -44,6 +46,11 @@ class E_Manager{
     void RedrawAll(bool reset=false);
 
 
+    ///Set Log
+    void SetLogWidget(QDockWidget* widgetDocker);
+    void SetLog(const char *arg, ...);
+
+
     protected:
     //Renderer
     vtkSmartPointer<vtkRenderer> m_renderer[NUM_VIEW];
@@ -51,5 +58,9 @@ class E_Manager{
     //Histogram
     vtkSmartPointer<vtkContextView> m_histogramRenderer;
     vtkSmartPointer<vtkChartXY> m_histogramPlot;
+
+    /// Log WIdget
+    QListWidget* m_logWidget;
     
 };
+

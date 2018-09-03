@@ -10,8 +10,6 @@
 #include <QThread>
 
 E_Window::E_Window(QWidget* parent):QMainWindow(parent){
-    //Show in maximum size
-
     // Initialize toolbar
     this->addToolBar(Qt::TopToolBarArea, this->InitToolbar());
     
@@ -58,6 +56,7 @@ QToolBar* E_Window::InitToolbar(){
 }
 
 QGroupBox* E_Window::Init3DSliceGroup(){
+
     QGroupBox* groupbox = new QGroupBox(tr("3d slice"));
     groupbox->setFlat(true);
 
@@ -159,16 +158,9 @@ void E_Window::CreateDockWindows(){
     // Test Another Dock Widget
     m_logDocker = new QDockWidget("log", this);
     m_logDocker->setAllowedAreas(Qt::LeftDockWidgetArea | Qt::RightDockWidgetArea);
-
-    m_logWidget = new QListWidget();
-    m_logWidget->addItems(QStringList()
-            << "Debugger Log"
-    );
-    m_logDocker->setWidget(m_logWidget);
-
+    E_Manager::Mgr()->SetLogWidget(m_logDocker);
     //Add To MainWindow
     this->addDockWidget(Qt::RightDockWidgetArea, m_logDocker);
-
 }
 
 
@@ -186,7 +178,7 @@ void E_Window::UpdateVolumeTree(){
         QTreeWidgetItem* toplevelItem = new QTreeWidgetItem();
         
         toplevelItem->setText(0, toplevelData->GetStudyDescription().c_str());
-        toplevelItem->setBackground(0, QBrush(QColor("green")));
+        toplevelItem->setBackground(0, QBrush(QColor("blue")));
         
         m_volumeTreeWidget->addTopLevelItem(toplevelItem);
 
@@ -216,9 +208,12 @@ void E_Window::ImportVolume(){
 
     // Import Volume
     if(ext == "nii"){
+        E_Manager::Mgr()->SetLog("Import *.nii File", NULL);
         E_Manager::VolumeMgr()->ImportNII(fileName.toLocal8Bit().data());
+
     }
     else if(ext == "dcm"){
+        E_Manager::Mgr()->SetLog("Import DICOM(*.dcm) file", NULL);
         QDir directoryPath = info.dir();
         E_Manager::VolumeMgr()->ImportDicom(directoryPath.absolutePath().toLocal8Bit().data());
 
@@ -311,5 +306,8 @@ void E_Window::OnTimeOut(){
     int childIdx = item->parent()->indexOfChild(item);
 
     E_Manager::VolumeMgr()->AddSelectedVolume(parentIdx, childIdx);
+
  }
+
+
 

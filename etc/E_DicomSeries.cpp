@@ -13,8 +13,6 @@ E_DicomSeries::~E_DicomSeries(){
 
 void E_DicomSeries::SetPath(const char* path){
 
-    std::cout << path << std::endl;
-
     typedef itk::GDCMSeriesFileNames NamesGeneratorType;    
     NamesGeneratorType::Pointer nameGenerator = NamesGeneratorType::New();
     nameGenerator->SetUseSeriesDetails(true);

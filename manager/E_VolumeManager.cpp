@@ -13,6 +13,8 @@
 #include <vtkFieldData.h>
 #include <vtkBarChartActor.h>
 #include<vtkLegendBoxActor.h>
+#include <vtkPiecewiseFunctionItem.h>
+#include <vtkPiecewiseControlPointsItem.h>
 
 #include <vtkFloatArray.h>
 #include <vtkTable.h>
@@ -40,84 +42,11 @@ E_VolumeManager::~E_VolumeManager(){
 }
 void E_VolumeManager::ImportDicom(const char* path){
 
+    E_Manager::Mgr()->SetLog("import from ", path, NULL);
     E_DicomSeries* series = new E_DicomSeries();
     series->SetPath(path);
     m_patientList.push_back(series);
 
-    return;
-
-    // std::string studyDescription = "";
-
-    // while (seriesItr != seriesEnd)
-    // {
-    //     std::vector<std::string> fileNames = nameGenerator->GetFileNames(seriesItr->c_str());
-
-    //     ///Define Reader
-    //     DicomReader::Pointer reader = DicomReader::New();
-    //     ImageIOType::Pointer dicomIO = ImageIOType::New();
-    //     reader->SetImageIO(dicomIO);        
-    //     reader->SetFileNames(fileNames);
-    //     reader->Update();
-
-
-    //     ///Get Study Description
-    //     if(studyDescription.length() == 0){
-    //         studyDescription = GetDicomTag(dicomIO, "0008|1030");
-    //         series->setText(0, studyDescription.c_str());
-    //     }
-    //     // std::string seriesDescription = GetDicomTag(dicomIO, "0008|103e");
-    //     // std::cout << seriesDescription << "(" <<  fileNames.size() << ")" << std::endl;
-
-
-    //     imageDataList.push_back(reader);
-
-    //     ++seriesItr;
-    // }
-
-    // m_patientList.push_back(series);
-
-    // ///////////////////Test Volume, from here, refactoring needed! ///////////////////////////////////////////
-    // ImageType::Pointer itkImageData = imageDataList[1]->GetOutput();
-
-
-    // ///Add Orientation
-    // OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
-    // orienter->UseImageDirectionOn();
-    // orienter->SetInput(itkImageData);
-    // orienter->Update();
-
-    // // Convert to vtkimagedataclear
-    // itkVtkConverter::Pointer conv = itkVtkConverter::New();
-    // conv->SetInput(orienter->GetOutput());
-    // conv->Update();
-
-    // double scalarRange[2];
-    // conv->GetOutput()->GetScalarRange(scalarRange);
-    // std::cout << "scalar Range : " << scalarRange[0] << "," << scalarRange[1] << std::endl;
-
-    //   //Make Volume
-    // if(m_volume == NULL){
-    //     m_volume = vtkSmartPointer<E_Volume>::New();        
-    // }
-    // m_volume->SetImageData(conv->GetOutput());
-    
-
-    // if(!m_bVolumeInRenderer){
-    //     E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume);
-    //     for(int i=0 ; i<NUMSLICE ; i++){
-    //         vtkSmartPointer<vtkImageSlice> slice = m_volume->GetImageSlice(i);
-    //         E_Manager::Mgr()->GetRenderer(i+1)->AddViewProp(slice);
-    //     }
-        
-    //     m_bVolumeInRenderer = true;
-    // }
-    // else{
-    //     UpdateVolume(m_volume);
-    // }
-
-    // UpdateHistogram();
-
-    // E_Manager::Mgr()->RedrawAll(true);
 }
 
 
@@ -283,56 +212,80 @@ void E_VolumeManager::UpdateVolume(vtkSmartPointer<vtkVolume> volume){
 }
 
 void E_VolumeManager::UpdateHistogram(){
-    return;
+
+    // Get Plot Data
     vtkSmartPointer<vtkImageData> imageData = m_volume->GetImageData();
+    vtkSmartPointer<vtkColorTransferFunction> colorFunction = m_volume->GetColorTransferFunction();
+    vtkSmartPointer<vtkPiecewiseFunction> opacityFunction = m_volume->GetOpacityTransferFunction();
+
+    ///Opacity FUnction Plot and contoller
+    vtkSmartPointer<vtkPiecewiseControlPointsItem> opacityController = vtkSmartPointer<vtkPiecewiseControlPointsItem>::New();
+    opacityController->SetPiecewiseFunction(opacityFunction);
+    vtkSmartPointer<vtkPiecewiseFunctionItem> opacityFunctionPlot = vtkSmartPointer<vtkPiecewiseFunctionItem>::New();
+    opacityFunctionPlot->SetPiecewiseFunction(opacityFunction);
+    // Get Plot Renderer and Clear
     vtkSmartPointer<vtkChartXY> chart = E_Manager::Mgr()->GetHistogramPlot();
+    
+
+
     chart->ClearPlots();
+
+    
+    // chart->AddPlot(opacityFunctionItem);
+    // chart->AddPlot(opacityFunctionPlot);
+    chart->AddPlot(opacityController);
+    
+
 
     double scalarRange[2];
     imageData->GetScalarRange(scalarRange);
     int minHU = scalarRange[0];
     int maxHU = scalarRange[1];
 
-    vtkSmartPointer<vtkImageAccumulate> histogram = vtkSmartPointer<vtkImageAccumulate>::New();
-    histogram->SetInputData(imageData);
-    histogram->SetComponentExtent(0, maxHU-minHU-1, 0, 0, 0, 0);
-    histogram->SetComponentOrigin(minHU, 0, 0);
-    histogram->SetComponentSpacing(1, 0, 0);
-    histogram->Update();
+    // vtkSmartPointer<vtkImageAccumulate> histogram = vtkSmartPointer<vtkImageAccumulate>::New();
+    // histogram->SetInputData(imageData);
+    // histogram->SetComponentExtent(0, maxHU-minHU-1, 0, 0, 0, 0);
+    // histogram->SetComponentOrigin(minHU, 0, 0);
+    // histogram->SetComponentSpacing(1, 0, 0);
+    // histogram->Update();
 
-    //add histogram to table
-    vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
-    vtkSmartPointer<vtkIntArray> intArr = vtkSmartPointer<vtkIntArray>::New();
-    vtkSmartPointer<vtkFloatArray> floatArr = vtkSmartPointer<vtkFloatArray>::New();
+    // //add histogram to table
+    // vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+    // vtkSmartPointer<vtkIntArray> intArr = vtkSmartPointer<vtkIntArray>::New();
+    // vtkSmartPointer<vtkFloatArray> floatArr = vtkSmartPointer<vtkFloatArray>::New();
 
-    intArr->SetName("scalar");
-    floatArr->SetName("histogram");
-    table->AddColumn(intArr);
-    table->AddColumn(floatArr);
+    // intArr->SetName("scalar");
+    // floatArr->SetName("histogram");
+    // table->AddColumn(intArr);
+    // table->AddColumn(floatArr);
 
-    int numRow = (int)(maxHU-minHU);
-    table->SetNumberOfRows(numRow);
+    // int numRow = (int)(maxHU-minHU);
+    // table->SetNumberOfRows(numRow);
 
-    for(int i=0 ; i<numRow; i++){
-        float val = histogram->GetOutput()->GetScalarComponentAsFloat(i, 0, 0, 0);
-        table->SetValue(i, 0, i + minHU);
-        table->SetValue(i, 1, val + 1);
-    }
+    // for(int i=0 ; i<numRow; i++){
+    //     float val = histogram->GetOutput()->GetScalarComponentAsFloat(i, 0, 0, 0);
+    //     table->SetValue(i, 0, i + minHU);
+    //     table->SetValue(i, 1, val + 1);
+    // }
 
-    vtkSmartPointer<vtkPlot> line;
-    line = chart->AddPlot( vtkChart::STACKED);
-    line->SetInputData(table, 0, 1);
-    line->SetColor(255, 0, 0, 255);
-    line->Update();
+    // vtkSmartPointer<vtkPlot> line;
+    // line = chart->AddPlot( vtkChart::STACKED);
+    // line->SetInputData(table, 0, 1);
+    // line->SetColor(255, 0, 0, 255);
+    // line->Update();
 
-    double hisRange[2];
-    histogram->GetOutput()->GetScalarRange(hisRange);
+    
+
+    // double hisRange[2];
+    // histogram->GetOutput()->GetScalarRange(hisRange);
 
     chart->GetAxis(vtkAxis::BOTTOM)->SetRange(minHU, maxHU);
     chart->GetAxis(vtkAxis::BOTTOM)->Update();
-    chart->GetAxis(vtkAxis::LEFT)->SetRange(1, hisRange[1]+1);
+    // chart->GetAxis(vtkAxis::LEFT)->SetRange(1, hisRange[1]+1);
+    chart->GetAxis(vtkAxis::LEFT)->SetRange(1, maxHU+1);
     chart->GetAxis(vtkAxis::LEFT)->LogScaleOn();
     chart->GetAxis(vtkAxis::LEFT)->Update();
+
 }
 
 
@@ -348,10 +301,6 @@ void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
     itkVtkConverter::Pointer conv = itkVtkConverter::New();
     conv->SetInput(orienter->GetOutput());
     conv->Update();
-
-    double scalarRange[2];
-    conv->GetOutput()->GetScalarRange(scalarRange);
-    std::cout << "scalar Range : " << scalarRange[0] << "," << scalarRange[1] << std::endl;
 
       //Make Volume
     if(m_volume == NULL){
