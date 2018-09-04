@@ -22,6 +22,9 @@ class E_Window : public QMainWindow{
     ~E_Window();
     
     protected:
+    // Fix screen size for gui scale factor
+    double m_screenSize;
+
     ///Rendering Widget
     QVTKOpenGLWidget* m_renderingWidget[E_Manager::NUM_VIEW];
 

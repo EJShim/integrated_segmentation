@@ -13,6 +13,7 @@ QListWidget{
     color: #1a80d7;
 }
 
+
 QTreeView { 
     alternate-background-color: #434343;
 }
@@ -63,4 +64,9 @@ QHeaderView::section
 
 QToolBar {
     border: 0px transparent;
+}
+
+QDockWidget::title {
+    background-color: #1c466b;
+    text-align: center;
 }

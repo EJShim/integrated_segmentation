@@ -5,6 +5,7 @@
 #include <vtkRenderer.h>
 #include <vtkContextView.h>
 #include <vtkChartXY.h>
+#include <E_ContextInteractorStyle.h>
 
 
 #include "E_VolumeManager.h"

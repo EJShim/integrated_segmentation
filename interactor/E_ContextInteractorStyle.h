@@ -16,11 +16,10 @@ class E_ContextInteractorStyle : public vtkContextInteractorStyle{
 
 
     public:
-    virtual void OnMouseWheelForward();
+    // virtual void OnMouseWheelForward();
     // virtual void OnMouseWheelBackward();
     // virtual void OnLeftButtonDown();
     // virtual void OnLeftButtonUp();
     virtual void OnMouseMove();
-
 
 };

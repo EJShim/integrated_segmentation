@@ -13,6 +13,7 @@
 #include <vtkFieldData.h>
 #include <vtkBarChartActor.h>
 #include<vtkLegendBoxActor.h>
+#include <vtkColorTransferFunctionItem.h>
 #include <vtkPiecewiseFunctionItem.h>
 #include <vtkPiecewiseControlPointsItem.h>
 
@@ -223,6 +224,14 @@ void E_VolumeManager::UpdateHistogram(){
     opacityController->SetPiecewiseFunction(opacityFunction);
     vtkSmartPointer<vtkPiecewiseFunctionItem> opacityFunctionPlot = vtkSmartPointer<vtkPiecewiseFunctionItem>::New();
     opacityFunctionPlot->SetPiecewiseFunction(opacityFunction);
+
+    /// Color Function Plot
+    vtkSmartPointer<vtkColorTransferFunctionItem> colorFunctionItem = vtkSmartPointer<vtkColorTransferFunctionItem>::New();
+    colorFunctionItem->SetColorTransferFunction(colorFunction);
+    
+    
+    
+    
     // Get Plot Renderer and Clear
     vtkSmartPointer<vtkChartXY> chart = E_Manager::Mgr()->GetHistogramPlot();
     
@@ -233,6 +242,7 @@ void E_VolumeManager::UpdateHistogram(){
     
     // chart->AddPlot(opacityFunctionItem);
     // chart->AddPlot(opacityFunctionPlot);
+    chart->AddPlot(colorFunctionItem);
     chart->AddPlot(opacityController);
     
 

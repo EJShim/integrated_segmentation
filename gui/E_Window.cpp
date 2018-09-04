@@ -12,6 +12,15 @@
 #include <math.h>
 
 E_Window::E_Window(QWidget* parent):QMainWindow(parent){
+
+    //initialize screen size
+    QRect rec = QApplication::desktop()->screenGeometry();
+    int height = rec.height();
+    int width = rec.width();
+    m_screenSize = sqrt(pow(height, 2) + pow(width, 2));
+    
+
+
     // Initialize toolbar
     this->addToolBar(Qt::TopToolBarArea, this->InitToolbar());
     
@@ -34,8 +43,8 @@ QToolBar* E_Window::InitToolbar(){
 
     QRect rec = QApplication::desktop()->screenGeometry();
     int height = rec.height();
-    int width = rec.width();
-    int iconSize = sqrt(pow(height, 2) + pow(width, 2)) / 50;
+    int iconSize = m_screenSize / 50;
+
     //Initialize Toolbar
     QToolBar* toolbar = new QToolBar();
     toolbar->setIconSize(QSize(iconSize, iconSize));
@@ -57,7 +66,7 @@ QToolBar* E_Window::InitToolbar(){
     toolbar->addAction(segmentation_action);
     connect(segmentation_action, SIGNAL(triggered()), this, SLOT(RunSegmentation()));
 
-    toolbar->addWidget(Init3DSliceGroup());
+    // toolbar->addWidget(Init3DSliceGroup());
 
     return toolbar;
 }
@@ -110,6 +119,9 @@ QWidget* E_Window::InitCentralWidget(){
     QGridLayout* layout = new QGridLayout();
     centralWidget->setLayout(layout);
 
+    layout->setSpacing(1);
+    layout->setContentsMargins(0, 0, 0, 0);
+
 
     //Add To Central Widget(Grid Layout)
     layout->addWidget(this->m_renderingWidget[E_Manager::VIEW_MAIN], 0, 1);
@@ -155,6 +167,7 @@ void E_Window::CreateDockWindows(){
 
     //Create Histogram Widget
     m_histogramWidget = new QVTKOpenGLWidget();
+    m_histogramWidget->setMinimumHeight(int(m_screenSize/20));
     E_Manager::Mgr()->SetHistogramWidget(m_histogramWidget);
     m_histDocker->setWidget(m_histogramWidget);
     
