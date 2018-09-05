@@ -167,12 +167,14 @@ void E_Manager::SetLogWidget(QDockWidget* widgetDocker){
 void E_Manager::SetLog(const char *arg, ...){
     va_list arguments;
 
-    QStringList list;
-    for (va_start(arguments, arg); arg != NULL; arg = va_arg(arguments, const char *)) {
-        list << arg;
+    std::string logstring = "";
+    for (va_start(arguments, arg); arg != NULL; arg = va_arg(arguments, const char *)) {    
+        logstring.append(arg);
+        logstring.append(" ");
     }
     
-    m_logWidget->addItems(list);
+    m_logWidget->addItem(QString(logstring.c_str()));
+    
     m_logWidget->verticalScrollBar()->setValue( m_logWidget->verticalScrollBar()->maximum());
 
 

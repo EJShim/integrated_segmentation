@@ -70,3 +70,9 @@ QDockWidget::title {
     background-color: #1c466b;
     text-align: center;
 }
+
+QComboBox{
+    /* background-color: #dddddd;
+    color:#000000; */
+    text-align: center;
+}

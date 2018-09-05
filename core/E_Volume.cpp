@@ -29,6 +29,8 @@ E_Volume::E_Volume(){
         m_gt_sliceMapper[i] = NULL;
         m_gt_imageSlice[i] = NULL;
     }
+
+    m_currentTransferFunctionIdx = -1;
     
 }
 
@@ -39,27 +41,17 @@ E_Volume::~E_Volume(){
 
 void E_Volume::SetImageData(vtkSmartPointer<vtkImageData> imageData){
     if(m_imageData == NULL) m_imageData = vtkSmartPointer<vtkImageData>::New();
-    
     m_imageData->DeepCopy(imageData);
 
-    double* scalarRange = m_imageData->GetScalarRange();
+    
 
     if(m_colorFunction == NULL){
         m_colorFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
-    }else{
-        m_colorFunction->RemoveAllPoints();        
-    }
-    m_colorFunction->AddRGBPoint(scalarRange[0], 1.0, 1.0, 1.0);
-    m_colorFunction->AddRGBPoint(scalarRange[1], 1.0, 1.0, 1.0);
-
-
-    if(m_opacityFunction == NULL){
         m_opacityFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
+        SetTransferFunction(0);
     }else{
-        m_opacityFunction->RemoveAllPoints();
+        SetTransferFunction(m_currentTransferFunctionIdx);
     }
-    m_opacityFunction->AddPoint(scalarRange[0], 0.0);
-    m_opacityFunction->AddPoint(scalarRange[1], 1.0);
 
     if(m_volumeProperty == NULL){
         m_volumeProperty = vtkSmartPointer<vtkVolumeProperty>::New();
@@ -86,6 +78,7 @@ void E_Volume::SetImageData(vtkSmartPointer<vtkImageData> imageData){
         m_imageProperty = vtkSmartPointer<vtkImageProperty>::New();
         m_imageProperty->SetInterpolationTypeToLinear();
     }
+    double* scalarRange = m_imageData->GetScalarRange();
     m_imageProperty->SetColorLevel( (scalarRange[1]+scalarRange[0])/2.0 );
     m_imageProperty->SetColorWindow(scalarRange[1] - scalarRange[0] - 1.0);
 
@@ -248,4 +241,57 @@ void E_Volume::BackwardSlice(int idx){
     }
 
     SetSlice(idx, sliceNum - 5);
+}
+
+
+void E_Volume::SetTransferFunction(int idx){
+    if(m_currentTransferFunctionIdx == idx) return;    
+
+
+    //Change Status
+    m_currentTransferFunctionIdx = idx;
+    
+    //Remove Current Function Val
+    m_colorFunction->RemoveAllPoints();        
+    m_opacityFunction->RemoveAllPoints();
+    
+    
+    double* scalarRange = m_imageData->GetScalarRange();
+    double housefieldRange[2] = {-1024.0, 10000.0};
+    scalarRange[0] = -1024;
+
+    
+    switch(idx){
+        case 0:
+
+        //Color Funciton
+        m_colorFunction->AddRGBPoint(housefieldRange[0], 1.0, 1.0, 1.0);        
+        m_colorFunction->AddRGBPoint(housefieldRange[1], 1.0, 1.0, 1.0);
+
+        //Opacity FUnction
+        m_opacityFunction->AddPoint(housefieldRange[0], 0.0);
+        m_opacityFunction->AddPoint(housefieldRange[1], 1.0);
+        break;
+
+        case 1:
+        //Color Function
+        m_colorFunction->AddRGBPoint(housefieldRange[0], 1.0, 1.0, 1.0);
+        m_colorFunction->AddRGBPoint(housefieldRange[1], 1.0, 1.0, 1.0);
+        m_colorFunction->AddRGBPoint(housefieldRange[1]+1, 1.0, 0.0, 0.0);
+        m_colorFunction->AddRGBPoint(scalarRange[1], 1.0, 0.0, 0.0);
+
+        
+
+        //Opacity FUnction
+        m_opacityFunction->AddPoint(housefieldRange[0], 0.0);
+        m_opacityFunction->AddPoint(housefieldRange[1], 1.0);
+        m_opacityFunction->AddPoint(housefieldRange[1]+1, 1.0);
+        m_opacityFunction->AddPoint(scalarRange[1], 1.0);
+        // m_opacityFunction->AddPoint(scalarRange[0], 0.0);
+        // m_opacityFunction->AddPoint(scalarRange[1], 1.0);
+        break;
+
+        default:
+        break;
+    }
 }

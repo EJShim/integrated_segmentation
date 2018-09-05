@@ -2,7 +2,7 @@
 #define E_VOLUMEMANAGER_H
 
 #include <iostream>
-
+#include <QComboBox>
 #include <vtkSmartPointer.h>
 #include <itkImage.h>
 #include <itkImageFileReader.h>
@@ -36,6 +36,7 @@ class E_VolumeManager{
     protected:   
     bool m_bVolumeInRenderer;
     bool m_bGTInRenderer;
+    QComboBox* m_comboBox;
     
     vtkSmartPointer<E_Volume> m_volume;
 
@@ -70,6 +71,9 @@ class E_VolumeManager{
     ///Add Selected Volume
     void AddVolume(ImageType::Pointer itkImageData);
     void AddSelectedVolume(int patientIdx, int seriesIdx);
+
+    /// Set OTF Control Combo Box
+    void SetComboBox(QComboBox* comboBox){m_comboBox = comboBox;}
 
     public:
 

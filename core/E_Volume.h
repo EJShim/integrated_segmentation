@@ -53,11 +53,18 @@ class E_Volume : public vtkVolume{
     vtkSmartPointer<vtkImageSlice> m_gt_imageSlice[3];
 
 
+    int m_currentTransferFunctionIdx;
+
+
 
     public:    
     void SetImageData(vtkSmartPointer<vtkImageData>);
     void SetGroundTruth(vtkSmartPointer<vtkImageData>);
     void AssignGroundTruthVolume(int slice, tensorflow::Tensor tensorImage);
+
+
+    ///Change Transfer Function
+    void SetTransferFunction(int idx);
 
     vtkSmartPointer<vtkImageData> GetImageData(){return m_imageData;}
     vtkSmartPointer<vtkImageSlice> GetImageSlice(int idx){return m_imageSlice[idx];}

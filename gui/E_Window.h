@@ -7,9 +7,9 @@
 #include <QListWidget>
 #include <QTreeWidget>
 #include "tensorflow/core/framework/tensor.h"
-
 #include "E_Manager.h"
 #include "E_SegmentationThread.h"
+#include "E_HistogramWidget.h"
 
 
 
@@ -43,7 +43,7 @@ class E_Window : public QMainWindow{
 
     /// Histogram Widget
     QDockWidget* m_histDocker;
-    QVTKOpenGLWidget* m_histogramWidget;
+    E_HistogramWidget* m_histogramWidget;
 
     ///Log Widget
     QDockWidget* m_logDocker;

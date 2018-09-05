@@ -166,9 +166,10 @@ void E_Window::CreateDockWindows(){
     m_histDocker->setAllowedAreas(Qt::RightDockWidgetArea | Qt::LeftDockWidgetArea);
 
     //Create Histogram Widget
-    m_histogramWidget = new QVTKOpenGLWidget();
-    m_histogramWidget->setMinimumHeight(int(m_screenSize/20));
-    E_Manager::Mgr()->SetHistogramWidget(m_histogramWidget);
+    m_histogramWidget = new E_HistogramWidget();
+    // m_histogramWidget->setMinimumHeight(int(m_screenSize/20));
+    E_Manager::Mgr()->SetHistogramWidget(m_histogramWidget->GetRenderer());
+    E_Manager::VolumeMgr()->SetComboBox(m_histogramWidget->GetComboBoxController());
     m_histDocker->setWidget(m_histogramWidget);
     
 
@@ -209,7 +210,7 @@ void E_Window::UpdateVolumeTree(){
         ///Add Children
         for(int j=0 ; j<toplevelData->GetNumberOfSerieses() ; j++){
             QTreeWidgetItem* childItem = new QTreeWidgetItem();
-            childItem->setText(0, toplevelData->GetSeriesDescriptions()[j].c_str());
+            childItem->setText(0, toplevelData->GetSeriesDescription(j).c_str());
             toplevelItem->addChild(childItem);
         }
     }

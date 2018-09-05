@@ -1,5 +1,6 @@
 #include "E_Manager.h"
 #include "E_VolumeManager.h"
+#include <string.h>
 
 #include <vtkLookupTable.h>
 #include <vtkExtractVOI.h>
@@ -73,7 +74,8 @@ void E_VolumeManager::ImportNII(const char* path){
 
     //Make Volume
     if(m_volume == NULL){
-        m_volume = vtkSmartPointer<E_Volume>::New();        
+        m_volume = vtkSmartPointer<E_Volume>::New();
+        // m_comboBox->setEnabled(true);
     }
     m_volume->SetImageData(conv->GetOutput());
     
@@ -241,8 +243,10 @@ void E_VolumeManager::InitializeHistogram(){
     // chart->AddPlot(opacityFunctionPlot);
     
     
-    chart->GetAxis(vtkAxis::LEFT)->SetRange(-1, 1);
+    chart->GetAxis(vtkAxis::LEFT)->SetRange(0, 1);
     chart->GetAxis(vtkAxis::LEFT)->Update();
+
+
     return;
     //Histogram
     m_histogramGraph = chart->AddPlot( vtkChart::STACKED);
@@ -264,7 +268,7 @@ void E_VolumeManager::UpdateHistogram(){
 
     chart->GetAxis(vtkAxis::BOTTOM)->SetRange(minHU, maxHU);
     chart->GetAxis(vtkAxis::BOTTOM)->Update();
-    E_Manager::Mgr()->SetLog("Scalar Range", std::to_string(minHU), std::to_string(maxHU), NULL);
+    E_Manager::Mgr()->SetLog("Scalar Range", std::to_string(minHU).c_str(), std::to_string(maxHU).c_str(), NULL);
 
 
     if(m_histogramGraph == NULL)
@@ -282,7 +286,7 @@ void E_VolumeManager::UpdateHistogram(){
     histogram->GetOutput()->GetScalarRange(hisRange);
     int minHIS = int(hisRange[0]);
     int maxHIS = int(hisRange[1]);
-    E_Manager::Mgr()->SetLog("Histogram Range : ", std::to_string(minHIS), std::to_string(maxHIS), NULL);
+    E_Manager::Mgr()->SetLog("Histogram Range : ", std::to_string(minHIS).c_str(), std::to_string(maxHIS).c_str(), NULL);
 
     //add histogram to table
     vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
@@ -356,8 +360,20 @@ void E_VolumeManager::AddSelectedVolume(int patientIdx, int seriesIdx){
     }
 
     ///Get Image Container from dicom group
-    DicomReader::Pointer container = m_patientList[patientIdx]->GetImageContainer()[seriesIdx];
+    DicomReader::Pointer container = m_patientList[patientIdx]->GetImageContainer(seriesIdx);
 
     //Add To Renderer
     AddVolume(container->GetOutput());
+
+
+    ///Change Current OTF according to series description
+    std::string description = m_patientList[patientIdx]->GetSeriesDescription(seriesIdx); 
+    E_Manager::Mgr()->SetLog(description.c_str(), NULL);
+    
+    if(description.find("unknown") != std::string::npos){
+        E_Manager::Mgr()->SetLog( "This is Segmentation Volume" , NULL);
+        m_comboBox->setCurrentIndex(1);
+    }else{
+        m_comboBox->setCurrentIndex(0);
+    }
 }

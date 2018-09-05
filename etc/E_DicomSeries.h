@@ -45,9 +45,11 @@ class E_DicomSeries{
 
     ///Get Image Container
     std::vector<DicomReader::Pointer> &GetImageContainer(){return m_imageContainer;}
+    DicomReader::Pointer GetImageContainer(int idx){return m_imageContainer[idx];}
 
     /// Get Series Description in STring
-    std::vector<std::string> &GetSeriesDescriptions(){return m_seriesDescription;}
+    std::vector<std::string> &GetSeriesDescription(){return m_seriesDescription;}
+    std::string &GetSeriesDescription(int idx){return m_seriesDescription[idx];}
 
     protected:
     std::string GetDicomTag(ImageIOType::Pointer dicomIO, std::string tag);
