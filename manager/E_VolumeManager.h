@@ -10,8 +10,10 @@
 #include <itkImageToVTKImageFilter.h>
 #include <itkOrientImageFilter.h>
 #include <E_DicomSeries.h>
-
+#include <vtkImageAccumulate.h>
+#include <vtkPlot.h>
 #include "E_Volume.h"
+
 
 class E_VolumeManager{
     public:
@@ -41,6 +43,9 @@ class E_VolumeManager{
     ///Dicom Series
     std::vector<E_DicomSeries*> m_patientList;
 
+    ///Histogram Data
+    vtkSmartPointer<vtkPlot> m_histogramGraph;
+
     public:
     //Import Data
     void ImportNII(const char* path);
@@ -59,6 +64,7 @@ class E_VolumeManager{
 
     /// Because of bug
     void UpdateVolume(vtkSmartPointer<vtkVolume> volume);
+    void InitializeHistogram();
     void UpdateHistogram();
 
     ///Add Selected Volume

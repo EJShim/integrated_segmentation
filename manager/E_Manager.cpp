@@ -1,5 +1,5 @@
 #include "E_Manager.h"
-
+#include <QScrollBar>
 #include <iostream>
 #include <vtkCamera.h>
 #include <vtkGenericOpenGLRenderWindow.h>
@@ -9,6 +9,7 @@
 #include <vtkAxis.h>
 #include "E_InteractorStyle.h"
 #include <vtkInteractorStyleUser.h>
+#include <vtkContextInteractorStyle.h>
 
 E_Manager::E_Manager(){
     this->Initialize();
@@ -85,31 +86,27 @@ void E_Manager::SetHistogramWidget(QVTKOpenGLWidget* widget){
     
     //Initialize Render WIndow and Interactor Style
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> renWin = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
-    vtkSmartPointer<vtkRenderWindowInteractor> interactor = vtkSmartPointer<vtkRenderWindowInteractor>::New();
-    vtkSmartPointer<E_ContextInteractorStyle> interactorStyle = vtkSmartPointer<E_ContextInteractorStyle>::New();
-    interactor->SetInteractorStyle(interactorStyle);
-    renWin->SetInteractor(interactor);
-    // Add InteractorStyle?
-
+    
+    
     // Add renderer to renwin
     m_histogramRenderer->SetRenderWindow(renWin);
+
+    /// Add Interactor Style??
+    vtkSmartPointer<E_ContextInteractorStyle> interactorStyle = vtkSmartPointer<E_ContextInteractorStyle>::New();
+    interactorStyle->SetScene(m_histogramRenderer->GetScene());
+    m_histogramRenderer->GetRenderWindow()->GetInteractor()->SetInteractorStyle(interactorStyle);
+
+
+   
+    
     m_histogramRenderer->GetScene()->ClearItems();
     
 
 
-
-    
-
-    
-
-    
-    // m_histogramRenderer->GetRenderWindow()->GetInteractor()->SetInteractorStyle(renWin->GetInteractor()->GetInteractorStyle());
-
-
-    // Set Histogram Plot
+    // Initialize Plot Chart
     m_histogramPlot = vtkSmartPointer<vtkChartXY>::New();
     m_histogramRenderer->GetScene()->AddItem(m_histogramPlot);
-    m_histogramPlot->ClearPlots();
+    //m_histogramPlot->ClearPlots();
 
     //Init Histogram Plot
     m_histogramPlot->ForceAxesToBoundsOn();
@@ -155,11 +152,15 @@ void E_Manager::RedrawAll(bool reset){
     }
 
     //Update Histogram
+    this->m_histogramRenderer->GetRenderer()->Render();
     this->m_histogramRenderer->GetRenderWindow()->Render();
+    
 }
 
 void E_Manager::SetLogWidget(QDockWidget* widgetDocker){
     m_logWidget = new QListWidget();
+    m_logWidget->setHorizontalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
+    m_logWidget->setVerticalScrollBarPolicy(Qt::ScrollBarAlwaysOff);
     widgetDocker->setWidget(m_logWidget);
 }
 
@@ -172,6 +173,7 @@ void E_Manager::SetLog(const char *arg, ...){
     }
     
     m_logWidget->addItems(list);
+    m_logWidget->verticalScrollBar()->setValue( m_logWidget->verticalScrollBar()->maximum());
 
 
     va_end(arguments);

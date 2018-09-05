@@ -49,7 +49,7 @@ void E_Volume::SetImageData(vtkSmartPointer<vtkImageData> imageData){
     }else{
         m_colorFunction->RemoveAllPoints();        
     }
-    m_colorFunction->AddRGBPoint(scalarRange[0], 0.0, 0.0, 0.0);
+    m_colorFunction->AddRGBPoint(scalarRange[0], 1.0, 1.0, 1.0);
     m_colorFunction->AddRGBPoint(scalarRange[1], 1.0, 1.0, 1.0);
 
 

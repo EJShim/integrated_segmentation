@@ -6,7 +6,6 @@
 #include <vtkImageData.h>
 
 #include <vtkImageMagnitude.h>
-#include <vtkImageAccumulate.h>
 #include <vtkImageExtractComponents.h>
 #include <vtkImageAccumulate.h>
 #include <vtkIntArray.h>
@@ -19,7 +18,6 @@
 
 #include <vtkFloatArray.h>
 #include <vtkTable.h>
-#include <vtkPlot.h>
 #include <vtkChartXY.h>
 #include <vtkAxis.h>
 
@@ -27,6 +25,7 @@
 #include "tensorflow/core/framework/tensor.h"
 
 #include "itkGDCMSeriesFileNames.h"
+#include <math.h>
 
 
 
@@ -35,6 +34,8 @@ E_VolumeManager::E_VolumeManager(){
 
     m_bVolumeInRenderer = false;
     m_bGTInRenderer = false;
+
+    m_histogramGraph = NULL;
     
 }
 
@@ -212,9 +213,9 @@ void E_VolumeManager::UpdateVolume(vtkSmartPointer<vtkVolume> volume){
     E_Manager::Mgr()->GetRenderer(0)->AddViewProp(volume);
 }
 
-void E_VolumeManager::UpdateHistogram(){
 
-    // Get Plot Data
+void E_VolumeManager::InitializeHistogram(){
+ // Get Plot Data
     vtkSmartPointer<vtkImageData> imageData = m_volume->GetImageData();
     vtkSmartPointer<vtkColorTransferFunction> colorFunction = m_volume->GetColorTransferFunction();
     vtkSmartPointer<vtkPiecewiseFunction> opacityFunction = m_volume->GetOpacityTransferFunction();
@@ -229,73 +230,78 @@ void E_VolumeManager::UpdateHistogram(){
     vtkSmartPointer<vtkColorTransferFunctionItem> colorFunctionItem = vtkSmartPointer<vtkColorTransferFunctionItem>::New();
     colorFunctionItem->SetColorTransferFunction(colorFunction);
     
-    
-    
+
     
     // Get Plot Renderer and Clear
     vtkSmartPointer<vtkChartXY> chart = E_Manager::Mgr()->GetHistogramPlot();
-    
-
-
     chart->ClearPlots();
-
-    
-    // chart->AddPlot(opacityFunctionItem);
-    // chart->AddPlot(opacityFunctionPlot);
     chart->AddPlot(colorFunctionItem);
     chart->AddPlot(opacityController);
+    // chart->AddPlot(opacityFunctionItem);
+    // chart->AddPlot(opacityFunctionPlot);
     
+    
+    chart->GetAxis(vtkAxis::LEFT)->SetRange(-1, 1);
+    chart->GetAxis(vtkAxis::LEFT)->Update();
+    return;
+    //Histogram
+    m_histogramGraph = chart->AddPlot( vtkChart::STACKED);
+    m_histogramGraph->SetColor(0, 255, 0, 255);
+    m_histogramGraph->SelectableOff();
+    m_histogramGraph->Update();
+}
 
+void E_VolumeManager::UpdateHistogram(){
+    //Get Image Data and chart
+    vtkSmartPointer<vtkImageData> imageData = m_volume->GetImageData();
+    vtkSmartPointer<vtkChartXY> chart = E_Manager::Mgr()->GetHistogramPlot();
 
+    //Update X-axis Scale
     double scalarRange[2];
     imageData->GetScalarRange(scalarRange);
     int minHU = scalarRange[0];
     int maxHU = scalarRange[1];
 
-    // vtkSmartPointer<vtkImageAccumulate> histogram = vtkSmartPointer<vtkImageAccumulate>::New();
-    // histogram->SetInputData(imageData);
-    // histogram->SetComponentExtent(0, maxHU-minHU-1, 0, 0, 0, 0);
-    // histogram->SetComponentOrigin(minHU, 0, 0);
-    // histogram->SetComponentSpacing(1, 0, 0);
-    // histogram->Update();
-
-    // //add histogram to table
-    // vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
-    // vtkSmartPointer<vtkIntArray> intArr = vtkSmartPointer<vtkIntArray>::New();
-    // vtkSmartPointer<vtkFloatArray> floatArr = vtkSmartPointer<vtkFloatArray>::New();
-
-    // intArr->SetName("scalar");
-    // floatArr->SetName("histogram");
-    // table->AddColumn(intArr);
-    // table->AddColumn(floatArr);
-
-    // int numRow = (int)(maxHU-minHU);
-    // table->SetNumberOfRows(numRow);
-
-    // for(int i=0 ; i<numRow; i++){
-    //     float val = histogram->GetOutput()->GetScalarComponentAsFloat(i, 0, 0, 0);
-    //     table->SetValue(i, 0, i + minHU);
-    //     table->SetValue(i, 1, val + 1);
-    // }
-
-    // vtkSmartPointer<vtkPlot> line;
-    // line = chart->AddPlot( vtkChart::STACKED);
-    // line->SetInputData(table, 0, 1);
-    // line->SetColor(255, 0, 0, 255);
-    // line->Update();
-
-    
-
-    // double hisRange[2];
-    // histogram->GetOutput()->GetScalarRange(hisRange);
-
     chart->GetAxis(vtkAxis::BOTTOM)->SetRange(minHU, maxHU);
     chart->GetAxis(vtkAxis::BOTTOM)->Update();
-    // chart->GetAxis(vtkAxis::LEFT)->SetRange(1, hisRange[1]+1);
-    chart->GetAxis(vtkAxis::LEFT)->SetRange(1, maxHU+1);
-    chart->GetAxis(vtkAxis::LEFT)->LogScaleOn();
-    chart->GetAxis(vtkAxis::LEFT)->Update();
+    E_Manager::Mgr()->SetLog("Scalar Range", std::to_string(minHU), std::to_string(maxHU), NULL);
 
+
+    if(m_histogramGraph == NULL)
+        return;
+    //Update Histogram
+    vtkSmartPointer<vtkImageAccumulate> histogram = vtkSmartPointer<vtkImageAccumulate>::New();
+    histogram->SetInputData(imageData);
+    histogram->SetComponentExtent(0, maxHU-minHU-1, 0, 0, 0, 0);
+    histogram->SetComponentOrigin(minHU, 0, 0);
+    histogram->SetComponentSpacing(10, 0, 0);
+    histogram->SetIgnoreZero( false );
+    histogram->Update();
+
+    double hisRange[2];
+    histogram->GetOutput()->GetScalarRange(hisRange);
+    int minHIS = int(hisRange[0]);
+    int maxHIS = int(hisRange[1]);
+    E_Manager::Mgr()->SetLog("Histogram Range : ", std::to_string(minHIS), std::to_string(maxHIS), NULL);
+
+    //add histogram to table
+    vtkSmartPointer<vtkTable> table = vtkSmartPointer<vtkTable>::New();
+    vtkSmartPointer<vtkIntArray> intArr = vtkSmartPointer<vtkIntArray>::New();
+    vtkSmartPointer<vtkFloatArray> floatArr = vtkSmartPointer<vtkFloatArray>::New();
+    intArr->SetName("scalar");
+    floatArr->SetName("histogram");
+    int numRow = (int)(maxHU-minHU);
+    table->SetNumberOfRows(numRow);
+    for(int i=0 ; i<numRow; i++){
+        float val = histogram->GetOutput()->GetScalarComponentAsFloat(i, 0, 0, 0);
+        intArr->InsertNextValue(i);
+        floatArr->InsertNextValue( log(val)/log(maxHIS));
+    }
+    table->AddColumn(intArr);
+    table->AddColumn(floatArr);
+
+    //Update Plot
+    m_histogramGraph->SetInputData(table, 0, 1);
 }
 
 
@@ -325,6 +331,9 @@ void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
             vtkSmartPointer<vtkImageSlice> slice = m_volume->GetImageSlice(i);
             E_Manager::Mgr()->GetRenderer(i+1)->AddViewProp(slice);
         }
+
+        //Add Histogram Items
+        InitializeHistogram();
         
         m_bVolumeInRenderer = true;
     }
@@ -334,6 +343,7 @@ void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
 
     UpdateHistogram();
     E_Manager::Mgr()->RedrawAll(true);
+
 }
 
 void E_VolumeManager::AddSelectedVolume(int patientIdx, int seriesIdx){

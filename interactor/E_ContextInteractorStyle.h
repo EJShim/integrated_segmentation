@@ -1,8 +1,8 @@
 #pragma once
 
 #include <vtkSmartPointer.h>
+#include <vtkInteractorStyleUser.h>
 #include <vtkContextInteractorStyle.h>
-
 
 class E_ContextInteractorStyle : public vtkContextInteractorStyle{
 
@@ -14,12 +14,15 @@ class E_ContextInteractorStyle : public vtkContextInteractorStyle{
     E_ContextInteractorStyle();
     ~E_ContextInteractorStyle();
 
+    protected:
+    bool m_bLButtonDown;
+
 
     public:
     // virtual void OnMouseWheelForward();
     // virtual void OnMouseWheelBackward();
-    // virtual void OnLeftButtonDown();
-    // virtual void OnLeftButtonUp();
+    virtual void OnLeftButtonDown();
+    virtual void OnLeftButtonUp();
     virtual void OnMouseMove();
 
 };
