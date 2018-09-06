@@ -257,38 +257,41 @@ void E_Volume::SetTransferFunction(int idx){
     
     
     double* scalarRange = m_imageData->GetScalarRange();
-    double housefieldRange[2] = {-1024.0, 10000.0};
-    scalarRange[0] = -1024;
-
+    int maskClipIndex = 12807;
+    int upperClipIndex = 12808;
+    
     
     switch(idx){
         case 0:
 
         //Color Funciton
-        m_colorFunction->AddRGBPoint(housefieldRange[0], 1.0, 1.0, 1.0);        
-        m_colorFunction->AddRGBPoint(housefieldRange[1], 1.0, 1.0, 1.0);
+        m_colorFunction->AddRGBPoint(scalarRange[0], 1.0, 1.0, 1.0);  
+        m_colorFunction->AddRGBPoint(scalarRange[1], 1.0, 1.0, 1.0);
 
         //Opacity FUnction
-        m_opacityFunction->AddPoint(housefieldRange[0], 0.0);
-        m_opacityFunction->AddPoint(housefieldRange[1], 1.0);
+        m_opacityFunction->AddPoint(scalarRange[0], 0.0);
+        m_opacityFunction->AddPoint(maskClipIndex, 1.0);
+        m_opacityFunction->AddPoint(maskClipIndex+1, 1.0);
+        m_opacityFunction->AddPoint(scalarRange[1], 1.0);
+
         break;
 
         case 1:
         //Color Function
-        m_colorFunction->AddRGBPoint(housefieldRange[0], 1.0, 1.0, 1.0);
-        m_colorFunction->AddRGBPoint(housefieldRange[1], 1.0, 1.0, 1.0);
-        m_colorFunction->AddRGBPoint(housefieldRange[1]+1, 1.0, 0.0, 0.0);
-        m_colorFunction->AddRGBPoint(scalarRange[1], 1.0, 0.0, 0.0);
-
+        m_colorFunction->AddRGBPoint(scalarRange[0], 1.0, 1.0, 1.0);
+        m_colorFunction->AddRGBPoint(maskClipIndex-1, 1.0, 1.0, 1.0);
         
+        m_colorFunction->AddRGBPoint(maskClipIndex, 0.0, 1.0, 0.0);
+        m_colorFunction->AddRGBPoint(upperClipIndex, 0.0, 1.0, 0.0);
+
+        m_colorFunction->AddRGBPoint(upperClipIndex+1, 1.0, 1.0, 1.0);
+        m_colorFunction->AddRGBPoint(scalarRange[1], 1.0, 1.0, 1.0);
 
         //Opacity FUnction
-        m_opacityFunction->AddPoint(housefieldRange[0], 0.0);
-        m_opacityFunction->AddPoint(housefieldRange[1], 1.0);
-        m_opacityFunction->AddPoint(housefieldRange[1]+1, 1.0);
+        m_opacityFunction->AddPoint(scalarRange[0], 0.0);
+        m_opacityFunction->AddPoint(maskClipIndex, 1.0);
+        m_opacityFunction->AddPoint(maskClipIndex+1, 1.0);
         m_opacityFunction->AddPoint(scalarRange[1], 1.0);
-        // m_opacityFunction->AddPoint(scalarRange[0], 0.0);
-        // m_opacityFunction->AddPoint(scalarRange[1], 1.0);
         break;
 
         default:

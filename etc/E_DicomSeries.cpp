@@ -26,8 +26,14 @@ void E_DicomSeries::SetPath(const char* path){
     std::vector<std::string>::const_iterator seriesItr = m_seriesUIDs.begin();
     std::vector<std::string>::const_iterator seriesEnd = m_seriesUIDs.end();
 
+    char* copy = strdup(path);
+    char * token, * last;
+    last = token = strtok(copy, "/");
+    for (;(token = strtok(NULL, "/")) != NULL; last = token);
+    free(copy);
 
-    m_studyDescription = "";
+    m_studyDescription = last;
+    int descLength = m_studyDescription.length();
     while (seriesItr != seriesEnd)
     {
         std::vector<std::string> fileNames = nameGenerator->GetFileNames(seriesItr->c_str());
@@ -44,8 +50,10 @@ void E_DicomSeries::SetPath(const char* path){
         m_imageContainer.push_back(reader);
 
         ///Get Study Description
-        if(m_studyDescription.length() == 0){
-            m_studyDescription = GetDicomTag(dicomIO, "0008|1030");
+        if(m_studyDescription.length() == descLength){
+            m_studyDescription.append("(");
+            m_studyDescription.append( GetDicomTag(dicomIO, "0008|1030") );
+            m_studyDescription.append(")");
         }
         ///Add Study Description
         std::string seriesDescription = GetDicomTag(dicomIO, "0008|103e") + " (" + std::to_string(fileNames.size()) + ")" ;

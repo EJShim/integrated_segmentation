@@ -24,6 +24,7 @@
 
 #include <itkNiftiImageIO.h>
 #include "tensorflow/core/framework/tensor.h"
+#include <itkThresholdImageFilter.h>
 
 #include "itkGDCMSeriesFileNames.h"
 #include <math.h>
@@ -317,9 +318,15 @@ void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
     orienter->SetInput(itkImageData);
     orienter->Update();
 
+    ///Threshold image, minimum -1024;
+    itk::ThresholdImageFilter<ImageType>::Pointer clipFilter = itk::ThresholdImageFilter<ImageType>::New();
+    clipFilter->SetInput(orienter->GetOutput());
+    clipFilter->ThresholdBelow(-1024);
+    // clipFilter->SetBelow
+
     // Convert to vtkimagedataclear
     itkVtkConverter::Pointer conv = itkVtkConverter::New();
-    conv->SetInput(orienter->GetOutput());
+    conv->SetInput(clipFilter->GetOutput());
     conv->Update();
 
       //Make Volume
