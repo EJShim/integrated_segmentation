@@ -251,7 +251,7 @@ void E_VolumeManager::InitializeHistogram(){
     return;
     //Histogram
     m_histogramGraph = chart->AddPlot( vtkChart::STACKED);
-    m_histogramGraph->SetColor(0, 255, 0, 255);
+    m_histogramGraph->SetColor(255, 0, 0, 255);
     m_histogramGraph->SelectableOff();
     m_histogramGraph->Update();
 }

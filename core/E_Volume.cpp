@@ -257,8 +257,8 @@ void E_Volume::SetTransferFunction(int idx){
     
     
     double* scalarRange = m_imageData->GetScalarRange();
-    int maskClipIndex = 12807;
-    int upperClipIndex = 12808;
+    // int maskClipIndex = 12807;
+    // int upperClipIndex = 12808;
     
     
     switch(idx){
@@ -270,8 +270,6 @@ void E_Volume::SetTransferFunction(int idx){
 
         //Opacity FUnction
         m_opacityFunction->AddPoint(scalarRange[0], 0.0);
-        m_opacityFunction->AddPoint(maskClipIndex, 1.0);
-        m_opacityFunction->AddPoint(maskClipIndex+1, 1.0);
         m_opacityFunction->AddPoint(scalarRange[1], 1.0);
 
         break;
@@ -279,18 +277,12 @@ void E_Volume::SetTransferFunction(int idx){
         case 1:
         //Color Function
         m_colorFunction->AddRGBPoint(scalarRange[0], 1.0, 1.0, 1.0);
-        m_colorFunction->AddRGBPoint(maskClipIndex-1, 1.0, 1.0, 1.0);
-        
-        m_colorFunction->AddRGBPoint(maskClipIndex, 0.0, 1.0, 0.0);
-        m_colorFunction->AddRGBPoint(upperClipIndex, 0.0, 1.0, 0.0);
-
-        m_colorFunction->AddRGBPoint(upperClipIndex+1, 1.0, 1.0, 1.0);
-        m_colorFunction->AddRGBPoint(scalarRange[1], 1.0, 1.0, 1.0);
+        m_colorFunction->AddRGBPoint(scalarRange[1]-1, 1.0, 1.0, 1.0);
+        m_colorFunction->AddRGBPoint(scalarRange[1], 0.0, 0.5, 0.0);
 
         //Opacity FUnction
         m_opacityFunction->AddPoint(scalarRange[0], 0.0);
-        m_opacityFunction->AddPoint(maskClipIndex, 1.0);
-        m_opacityFunction->AddPoint(maskClipIndex+1, 1.0);
+        m_opacityFunction->AddPoint(scalarRange[1]-1, 1.0);
         m_opacityFunction->AddPoint(scalarRange[1], 1.0);
         break;
 
