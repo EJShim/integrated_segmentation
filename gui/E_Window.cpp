@@ -141,16 +141,9 @@ void E_Window::CreateDockWindows(){
     m_volumeTreeDocker->setAllowedAreas(Qt::LeftDockWidgetArea);
     this->addDockWidget(Qt::LeftDockWidgetArea, m_volumeTreeDocker);
 
-
-    m_volumeTreeWidget = new QTreeWidget(this);
-    m_volumeTreeWidget->setHeaderHidden(true);
-    m_volumeTreeWidget->setSortingEnabled(false);
-    m_volumeTreeWidget->setAlternatingRowColors(true);
-    m_volumeTreeWidget->setSelectionBehavior(QAbstractItemView::SelectItems);
+    //Add Tree Widget To Docker
+    m_volumeTreeWidget = new E_TreeWidgetVolume(this);
     m_volumeTreeDocker->setWidget(m_volumeTreeWidget);
-    connect(m_volumeTreeWidget, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(onItemDoubleClicked(QTreeWidgetItem*, int)));
-
-
 
 
     //////////// Volume Info Widget
@@ -188,34 +181,7 @@ void E_Window::CreateDockWindows(){
 
 
 void E_Window::UpdateVolumeTree(){
-    //Clear
-    m_volumeTreeWidget->clear();
-
-    std::vector<E_DicomSeries*> patientSeries = E_Manager::VolumeMgr()->GetVolumeList();
-
-
-    for(int i=0 ; i<patientSeries.size() ; i++){
-
-        ///top level
-        E_DicomSeries* toplevelData = patientSeries[i];
-        QTreeWidgetItem* toplevelItem = new QTreeWidgetItem();
-        
-        toplevelItem->setText(0, toplevelData->GetStudyDescription().c_str());
-        toplevelItem->setBackground(0, QBrush(QColor("blue")));
-        
-        m_volumeTreeWidget->addTopLevelItem(toplevelItem);
-
-
-
-        ///Add Children
-        for(int j=0 ; j<toplevelData->GetNumberOfSerieses() ; j++){
-            QTreeWidgetItem* childItem = new QTreeWidgetItem();
-            childItem->setText(0, toplevelData->GetSeriesDescription(j).c_str());
-            toplevelItem->addChild(childItem);
-        }
-    }
-
-    m_volumeTreeWidget->expandAll();
+    m_volumeTreeWidget->Update();
 }
 
 
@@ -317,20 +283,6 @@ void E_Window::OnTimeOut(){
     E_Manager::Mgr()->Redraw(0);
     E_Manager::Mgr()->Redraw(3);
 }
-
-
- void E_Window::onItemDoubleClicked(QTreeWidgetItem* item, int column){
-
-    if(item->parent() == NULL){
-        return;
-    }
-
-    int parentIdx = m_volumeTreeWidget->indexOfTopLevelItem(item->parent());
-    int childIdx = item->parent()->indexOfChild(item);
-
-    E_Manager::VolumeMgr()->AddSelectedVolume(parentIdx, childIdx);
-
- }
 
 
 

@@ -41,8 +41,8 @@ E_Volume::~E_Volume(){
 
 void E_Volume::SetImageData(vtkSmartPointer<vtkImageData> imageData){
     if(m_imageData == NULL) m_imageData = vtkSmartPointer<vtkImageData>::New();
-    m_imageData->DeepCopy(imageData);
 
+    m_imageData->DeepCopy(imageData);
     
 
     if(m_colorFunction == NULL){
@@ -277,12 +277,11 @@ void E_Volume::SetTransferFunction(int idx){
         case 1:
         //Color Function
         m_colorFunction->AddRGBPoint(scalarRange[0], 1.0, 1.0, 1.0);
-        m_colorFunction->AddRGBPoint(scalarRange[1]-1, 1.0, 1.0, 1.0);
+        // m_colorFunction->AddRGBPoint(scalarRange[1]-1, 1.0, 1.0, 1.0);
         m_colorFunction->AddRGBPoint(scalarRange[1], 0.0, 0.5, 0.0);
 
         //Opacity FUnction
         m_opacityFunction->AddPoint(scalarRange[0], 0.0);
-        m_opacityFunction->AddPoint(scalarRange[1]-1, 1.0);
         m_opacityFunction->AddPoint(scalarRange[1], 1.0);
         break;
 

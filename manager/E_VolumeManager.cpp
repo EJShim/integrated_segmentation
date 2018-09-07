@@ -309,9 +309,7 @@ void E_VolumeManager::UpdateHistogram(){
     m_histogramGraph->SetInputData(table, 0, 1);
 }
 
-
-void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
-
+vtkSmartPointer<vtkImageData> E_VolumeManager::ConvertITKVolumeToVTKVolume(ImageType::Pointer itkImageData){
     ///Add Orientation
     OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
     orienter->UseImageDirectionOn();
@@ -329,12 +327,17 @@ void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
     conv->SetInput(clipFilter->GetOutput());
     conv->Update();
 
+    return conv->GetOutput();
+}
+
+
+void E_VolumeManager::AddVolume(vtkSmartPointer<vtkImageData> vtkImageData){
+
       //Make Volume
     if(m_volume == NULL){
         m_volume = vtkSmartPointer<E_Volume>::New();        
     }
-    m_volume->SetImageData(conv->GetOutput());
-    
+    m_volume->SetImageData(vtkImageData);
 
     if(!m_bVolumeInRenderer){
         E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume);
@@ -353,7 +356,52 @@ void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
     }
 
     UpdateHistogram();
-    E_Manager::Mgr()->RedrawAll(true);
+}
+
+void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
+    // vtkSmartPointer<vtkImageData> imageData = ConvertITKVolumeToVTKVolume(itkImageData);
+    // AddVolume(imageData);
+
+       ///Add Orientation
+    OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
+    orienter->UseImageDirectionOn();
+    orienter->SetInput(itkImageData);
+    orienter->Update();
+
+    ///Threshold image, minimum -1024;
+    itk::ThresholdImageFilter<ImageType>::Pointer clipFilter = itk::ThresholdImageFilter<ImageType>::New();
+    clipFilter->SetInput(orienter->GetOutput());
+    clipFilter->ThresholdBelow(-1024);
+    // clipFilter->SetBelow
+
+    // Convert to vtkimagedataclear
+    itkVtkConverter::Pointer conv = itkVtkConverter::New();
+    conv->SetInput(clipFilter->GetOutput());
+    conv->Update();
+
+        //Make Volume
+    if(m_volume == NULL){
+        m_volume = vtkSmartPointer<E_Volume>::New();        
+    }
+    m_volume->SetImageData(conv->GetOutput());
+
+    if(!m_bVolumeInRenderer){
+        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume);
+        for(int i=0 ; i<NUMSLICE ; i++){
+            vtkSmartPointer<vtkImageSlice> slice = m_volume->GetImageSlice(i);
+            E_Manager::Mgr()->GetRenderer(i+1)->AddViewProp(slice);
+        }
+
+        //Add Histogram Items
+        InitializeHistogram();
+        
+        m_bVolumeInRenderer = true;
+    }
+    else{
+        UpdateVolume(m_volume);
+    }
+
+    UpdateHistogram();
 
 }
 
@@ -361,7 +409,6 @@ void E_VolumeManager::AddSelectedVolume(int patientIdx, int seriesIdx){
     if(m_patientList.size() < patientIdx + 1 ){
         return;
     }
-
     if(m_patientList[patientIdx]->GetNumberOfSerieses() < seriesIdx+1){
         return;
     }
@@ -374,13 +421,15 @@ void E_VolumeManager::AddSelectedVolume(int patientIdx, int seriesIdx){
 
 
     ///Change Current OTF according to series description
-    std::string description = m_patientList[patientIdx]->GetSeriesDescription(seriesIdx); 
+    std::string description = m_patientList[patientIdx]->GetStudyDescription(); 
     E_Manager::Mgr()->SetLog(description.c_str(), NULL);
     
-    if(description.find("unknown") != std::string::npos){
+    if(description.find("segmentation") != std::string::npos){
         E_Manager::Mgr()->SetLog( "This is Segmentation Volume" , NULL);
         m_comboBox->setCurrentIndex(1);
     }else{
         m_comboBox->setCurrentIndex(0);
     }
+
+    E_Manager::Mgr()->RedrawAll(true);
 }

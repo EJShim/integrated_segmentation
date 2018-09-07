@@ -69,7 +69,9 @@ class E_VolumeManager{
     void UpdateHistogram();
 
     ///Add Selected Volume
+    vtkSmartPointer<vtkImageData> ConvertITKVolumeToVTKVolume(ImageType::Pointer itkImageData);
     void AddVolume(ImageType::Pointer itkImageData);
+    void AddVolume(vtkSmartPointer<vtkImageData> vtkImageData);
     void AddSelectedVolume(int patientIdx, int seriesIdx);
 
     /// Set OTF Control Combo Box

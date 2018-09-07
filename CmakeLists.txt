@@ -14,6 +14,7 @@ set(SRC_FILES
     resources/resources.qrc
     gui/E_Window.cpp
     gui/E_HistogramWidget.cpp
+    gui/E_TreeWidgetVolume.cpp
     manager/E_Manager.cpp
     manager/E_VolumeManager.cpp
     interactor/E_InteractorStyle.cpp

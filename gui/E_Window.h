@@ -6,6 +6,7 @@
 #include <QDockWidget>
 #include <QListWidget>
 #include <QTreeWidget>
+#include <E_TreeWidgetVolume.h>
 #include "tensorflow/core/framework/tensor.h"
 #include "E_Manager.h"
 #include "E_SegmentationThread.h"
@@ -37,7 +38,7 @@ class E_Window : public QMainWindow{
 
     ///Volume Tree Widget
     QDockWidget* m_volumeTreeDocker;
-    QTreeWidget* m_volumeTreeWidget;
+    E_TreeWidgetVolume* m_volumeTreeWidget;
     
 
 
@@ -78,7 +79,6 @@ class E_Window : public QMainWindow{
     ///temporary
     void ImportGT();
 
-    ///Tree Widget
-    void onItemDoubleClicked(QTreeWidgetItem* item, int column);
+
     
 };

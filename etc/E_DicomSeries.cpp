@@ -27,7 +27,7 @@ void E_DicomSeries::SetPath(const char* path){
     std::vector<std::string>::const_iterator seriesEnd = m_seriesUIDs.end();
 
     char* copy = strdup(path);
-    char * token, * last;
+    char *token, *last;
     last = token = strtok(copy, "/");
     for (;(token = strtok(NULL, "/")) != NULL; last = token);
     free(copy);
