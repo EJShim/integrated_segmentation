@@ -3,8 +3,14 @@
 #include <QAction>
 #include <QMenu>
 #include <QPoint>
+#include <QSignalMapper>
+#include <QFileDialog>
 
 E_TreeWidgetVolume::E_TreeWidgetVolume(QWidget *parent){
+    
+    m_currentParentIdx = -1;
+    m_currentChildIdx = -1;
+
 
     Initialize();
 }
@@ -21,11 +27,11 @@ void E_TreeWidgetVolume::Initialize(){
     setAlternatingRowColors(true);
     setSelectionBehavior(QAbstractItemView::SelectItems);
 
-     connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(onItemDoubleClicked(QTreeWidgetItem*, int)));
+    connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(onItemDoubleClicked(QTreeWidgetItem*, int)));
 
     //Set Policy??
-    this->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(this, SLOT(customContextMenuRequested(const QPoint &pos)), this, SLOT(prepareMenu(const QPoint &pos)));
+    setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(this, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onContextMenu(const QPoint &)));
 }
 
 void E_TreeWidgetVolume::Update(){
@@ -77,22 +83,48 @@ void E_TreeWidgetVolume::Update(){
  }
 
 
- void E_TreeWidgetVolume::prepareMenu( const QPoint & pos )
+ void E_TreeWidgetVolume::onContextMenu( const QPoint & pos )
 {
-    std::cout << "right clicked?? " << std::endl;
+    ///Get Selected Item
+    QTreeWidgetItem *item = this->itemAt( pos );
+    if(item == NULL) return;
+    if(item->parent() == NULL){
+        return;
+    }
+    m_currentParentIdx = indexOfTopLevelItem(item->parent());
+    m_currentChildIdx = item->parent()->indexOfChild(item);
 
-    QTreeWidgetItem *nd = this->itemAt( pos );
 
+    //Make Import Ground Truth Action
+    QAction *action = new QAction("Import Ground Truth", this);
+    QSignalMapper* mapper = new QSignalMapper(this);
+    connect(action, SIGNAL(triggered()), this, SLOT(onImportGroundTruth()));
 
-
-    QAction *newAct = new QAction("test menu", this);
-    newAct->setStatusTip(tr("new sth"));
-    //onnect(newAct, SIGNAL(triggered()), this, SLOT(newDev()));
-
-
+    //Pop-up Menu
     QMenu menu(this);
-    menu.addAction(newAct);
-
-    QPoint pt(pos);
+    menu.addAction(action);
     menu.exec( this->mapToGlobal(pos) );
+}
+
+void E_TreeWidgetVolume::onImportGroundTruth(){
+    if(m_currentParentIdx == -1 || m_currentChildIdx == -1) return;
+
+    QString fileName = QFileDialog::getOpenFileName(this, ("Open File"),"~/..", tr("Dicom file(*.dcm) ;; NII file(*.nii)"));
+    if(fileName.length() < 1) return;
+    QFileInfo info(fileName);
+    QString ext = info.completeSuffix();
+
+
+    // Import Volume
+    if(ext == "nii"){
+        E_Manager::Mgr()->SetLog("Import *.nii Ground Truth File of ", std::to_string(m_currentParentIdx), std::to_string(m_currentChildIdx), NULL);
+
+    }
+    else if(ext == "dcm"){
+        E_Manager::Mgr()->SetLog("Import DICOM(*.dcm) Ground Truth File of ",  std::to_string(m_currentParentIdx), std::to_string(m_currentChildIdx), NULL);
+        QDir directoryPath = info.dir();
+        E_Manager::VolumeMgr()->ImportGroundTruth(directoryPath.absolutePath().toLocal8Bit().data(), m_currentParentIdx, m_currentChildIdx);
+
+        // UpdateVolumeTree();
+    }
 }

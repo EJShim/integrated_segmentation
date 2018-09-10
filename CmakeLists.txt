@@ -20,7 +20,6 @@ set(SRC_FILES
     interactor/E_InteractorStyle.cpp
     interactor/E_ContextInteractorStyle.cpp
     thread/E_SegmentationThread.cpp
-    etc/E_DicomSeries.cpp
 )
 
 include_directories(

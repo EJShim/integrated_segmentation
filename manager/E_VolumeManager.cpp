@@ -140,6 +140,10 @@ void E_VolumeManager::ImportGroundTruth(std::string path){
     E_Manager::Mgr()->RedrawAll(true);    
 }
 
+void E_VolumeManager::ImportGroundTruth(const char* path, int parentIdx, int childIdx){
+    std::cout << parentIdx << "," << childIdx << std::endl;
+}
+
 void E_VolumeManager::ForwardSlice(int idx){
     if(m_volume == NULL) return;
 

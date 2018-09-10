@@ -52,6 +52,7 @@ class E_VolumeManager{
     void ImportNII(const char* path);
     void ImportDicom(const char* path);
     void ImportGroundTruth(std::string path);
+    void ImportGroundTruth(const char* path, int parentIdx, int childIdx);
 
     //move slice
     void ForwardSlice(int idx);
@@ -73,6 +74,8 @@ class E_VolumeManager{
     void AddVolume(ImageType::Pointer itkImageData);
     void AddVolume(vtkSmartPointer<vtkImageData> vtkImageData);
     void AddSelectedVolume(int patientIdx, int seriesIdx);
+
+    //Import 
 
     /// Set OTF Control Combo Box
     void SetComboBox(QComboBox* comboBox){m_comboBox = comboBox;}
