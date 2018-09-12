@@ -141,7 +141,37 @@ void E_VolumeManager::ImportGroundTruth(std::string path){
 }
 
 void E_VolumeManager::ImportGroundTruth(const char* path, int parentIdx, int childIdx){
-    std::cout << parentIdx << "," << childIdx << std::endl;
+
+    E_DicomSeries* series = new E_DicomSeries();
+    series->SetPath(path);
+
+    if(series->GetNumberOfSerieses() > 1){
+        E_Manager::Mgr()->SetLog("Something wrong, attempt to import file that has more than 2 serieses", NULL);
+        return;
+    }
+
+    //Get ImageData
+    DicomReader::Pointer container = series->GetImageContainer(0);
+
+           ///Add Orientation
+    OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
+    orienter->UseImageDirectionOn();
+    orienter->SetInput(container->GetOutput());
+    orienter->Update();
+
+    ///Threshold image, minimum -1024;
+    itk::ThresholdImageFilter<ImageType>::Pointer clipFilter = itk::ThresholdImageFilter<ImageType>::New();
+    clipFilter->SetInput(orienter->GetOutput());
+    clipFilter->ThresholdBelow(-1024);
+    // clipFilter->SetBelow
+
+
+    ///Set Ground Truth
+    m_patientList[parentIdx]->SetGroundTruth(clipFilter->GetOutput(), childIdx);
+
+
+    E_Manager::Mgr()->SetLog("Ground Truth Set", NULL);
+
 }
 
 void E_VolumeManager::ForwardSlice(int idx){
@@ -363,8 +393,7 @@ void E_VolumeManager::AddVolume(vtkSmartPointer<vtkImageData> vtkImageData){
 }
 
 void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
-    // vtkSmartPointer<vtkImageData> imageData = ConvertITKVolumeToVTKVolume(itkImageData);
-    // AddVolume(imageData);
+    // RemoveGroundTruth();
 
        ///Add Orientation
     OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
@@ -436,4 +465,57 @@ void E_VolumeManager::AddSelectedVolume(int patientIdx, int seriesIdx){
     }
 
     E_Manager::Mgr()->RedrawAll(true);
+}
+
+
+void E_VolumeManager::AddGroundTruth(int parentIdx, int childIdx){
+    if(m_volume == NULL) return;
+
+    ///Set Ground Truth
+    ImageType::Pointer itkImage = m_patientList[parentIdx]->GetGroundTruth(childIdx);
+
+/////////////////////////////////////////////////////////////////////////////////////////////
+    
+    // Convert to vtkimagedata    
+    itkVtkConverter::Pointer conv = itkVtkConverter::New();
+    conv->SetInput(itkImage);
+    conv->Update();
+    
+    //Update GT Image to the volume
+    m_volume->SetGroundTruth(conv->GetOutput());
+
+    // Add To Renderer
+
+    if(!m_bGTInRenderer){
+        E_Manager::Mgr()->GetRenderer(0)->AddViewProp(m_volume->GetGroundTruthVolume());
+        for(int i=0 ; i<3 ; i++){
+            vtkSmartPointer<vtkImageSlice> slice = m_volume->GetGroundTruthImageSlice(i);
+            //E_Manager::Mgr()->GetRenderer(0)->AddViewProp(slice);
+            E_Manager::Mgr()->GetRenderer(i+1)->AddViewProp(slice);
+        }
+        m_bGTInRenderer = true;
+    }else{
+        UpdateVolume(m_volume->GetGroundTruthVolume());
+    }
+    
+    
+
+    E_Manager::Mgr()->RedrawAll(true);
+
+}
+
+void E_VolumeManager::RemoveGroundTruth(){
+    if(m_volume->GetGroundTruthVolume() == NULL) return;
+    
+    //Show Ground Truth Volume
+    E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->RemoveViewProp(m_volume->GetGroundTruthVolume());
+    for(int i=0 ; i<3 ; i++){
+        vtkSmartPointer<vtkImageSlice> slice = m_volume->GetGroundTruthImageSlice(i);
+        // E_Manager::Mgr()->GetRenderer(0)->RemoveViewProp(slice);
+        E_Manager::Mgr()->GetRenderer(i+1)->RemoveViewProp(slice);
+    }
+    E_Manager::Mgr()->RedrawAll(false);   
+
+    
+
 }

@@ -3,6 +3,7 @@
 
 E_ImageSeries::E_ImageSeries(std::vector<std::string> filenames){
     ///Define Reader
+    m_numSlices = filenames.size();
     m_imageContainer = DicomReader::New();
     m_dicomIO = ImageIOType::New();
 
@@ -11,6 +12,7 @@ E_ImageSeries::E_ImageSeries(std::vector<std::string> filenames){
     m_imageContainer->Update();
 
     ///Add To Container
+    m_groundTruth = NULL;
 }
 
 E_ImageSeries::~E_ImageSeries(){
@@ -18,11 +20,11 @@ E_ImageSeries::~E_ImageSeries(){
 }
 
 std::string E_ImageSeries::GetSeriesDescription(){
-    return GetDicomInfo("0008|103e");
+    //Show series description with slice numbers
+    return GetDicomInfo("0008|103e") + " (" + std::to_string( GetNumberOfSlices() ) + ")";
 }
 
 std::string E_ImageSeries::GetDicomInfo(std::string tag){
-    std::cout << "get series description" << std::endl;
     using MetaDataStringType = itk::MetaDataObject<std::string>;
 
     

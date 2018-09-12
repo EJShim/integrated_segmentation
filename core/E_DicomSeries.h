@@ -27,17 +27,18 @@ class E_DicomSeries{
     std::string m_studyDescription;
 
     ///Series UIDs,, it should be merged..
-    std::vector<E_ImageSeries*> m_imageSeries;
-    // std::vector<DicomReader::Pointer> m_imageContainer;
-    // std::vector<ImageType::Pointer> m_groundTruth;
-    // std::vector<std::string> m_seriesUIDs;
-    // std::vector<std::string> m_seriesDescription;
+    std::vector<E_ImageSeries*> m_imageSeries;    
 
 
     public:
 
     ///Set Directory Path
     void SetPath(const char* path);
+
+    ///Set Ground Truth
+    void SetGroundTruth(ImageType::Pointer gt, int idx){m_imageSeries[idx]->SetGroundTruth(gt);}
+    ImageType::Pointer GetGroundTruth(int idx){return m_imageSeries[idx]->GetGroundTruth();}
+    bool IsGroundTruthExist(int idx);
 
     ///Get Number of Child Serieses
     int GetNumberOfSerieses(){return m_imageSeries.size();}
@@ -53,7 +54,5 @@ class E_DicomSeries{
     // std::vector<std::string> &GetSeriesDescription(){return m_seriesDescription;}
     std::string GetSeriesDescription(int idx){return m_imageSeries[idx]->GetSeriesDescription();}
 
-    protected:
-    // std::string GetDicomTag(ImageIOType::Pointer dicomIO, std::string tag);
 
 };

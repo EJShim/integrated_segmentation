@@ -5,6 +5,7 @@
 #include <QPoint>
 #include <QSignalMapper>
 #include <QFileDialog>
+#include <QHeaderView>
 
 E_TreeWidgetVolume::E_TreeWidgetVolume(QWidget *parent){
     
@@ -22,12 +23,25 @@ E_TreeWidgetVolume::~E_TreeWidgetVolume(){
 
 
 void E_TreeWidgetVolume::Initialize(){
-    setHeaderHidden(true);
+
     setSortingEnabled(false);
     setAlternatingRowColors(true);
+    setHeaderHidden(true);
+
+    setColumnCount(3);
+    header()->setSectionResizeMode(0, QHeaderView::ResizeToContents);
+    header()->setSectionResizeMode(1, QHeaderView::ResizeToContents);
+    header()->setSectionResizeMode(2, QHeaderView::ResizeToContents);
+    // QStringList headerLabels;
+    // headerLabels.push_back(tr("description"));
+    // headerLabels.push_back(tr("slice"));
+    // headerLabels.push_back(tr("ground truth"));
+    // setHeaderLabels(headerLabels);
+
     setSelectionBehavior(QAbstractItemView::SelectItems);
 
     connect(this, SIGNAL(itemDoubleClicked(QTreeWidgetItem*, int)), this, SLOT(onItemDoubleClicked(QTreeWidgetItem*, int)));
+    connect(this, SIGNAL(itemChanged(QTreeWidgetItem*, int)), this, SLOT(onItemChanged(QTreeWidgetItem*, int)));
 
     //Set Policy??
     setContextMenuPolicy(Qt::CustomContextMenu);
@@ -48,16 +62,21 @@ void E_TreeWidgetVolume::Update(){
         QTreeWidgetItem* toplevelItem = new QTreeWidgetItem();
         
         toplevelItem->setText(0, toplevelData->GetStudyDescription().c_str());
-        toplevelItem->setBackground(0, QBrush(QColor("blue")));
-        
+        // toplevelItem->setText(1, "");
+        for(int j=0 ; j<columnCount() ; j++){
+            toplevelItem->setBackground(j, QBrush(QColor("blue")));
+        }
+
         addTopLevelItem(toplevelItem);
-
-
 
         ///Add Children
         for(int j=0 ; j<toplevelData->GetNumberOfSerieses() ; j++){
             QTreeWidgetItem* childItem = new QTreeWidgetItem();
-            childItem->setText(0, toplevelData->GetSeriesDescription(j).c_str());
+            childItem->setText(0, toplevelData->GetSeriesDescription(j).c_str());            
+            if(toplevelData->IsGroundTruthExist(j)){
+                // childItem->setFlags(childItem->flags() | Qt::ItemIsUserCheckable | Qt::ItemIsSelectable);
+                childItem->setCheckState(2, Qt::Unchecked);
+            }
             toplevelItem->addChild(childItem);
         }
     }
@@ -70,6 +89,7 @@ void E_TreeWidgetVolume::Update(){
 /////////////////////////////////////////////////////////////////
 
  void E_TreeWidgetVolume::onItemDoubleClicked(QTreeWidgetItem* item, int column){
+     if(column != 0) return;
 
     if(item->parent() == NULL){
         return;
@@ -79,8 +99,30 @@ void E_TreeWidgetVolume::Update(){
     int childIdx = item->parent()->indexOfChild(item);
 
     E_Manager::VolumeMgr()->AddSelectedVolume(parentIdx, childIdx);
-
  }
+
+void E_TreeWidgetVolume::onItemChanged(QTreeWidgetItem* item, int column){
+    if(column != 2) return;
+
+    if(item->parent() == NULL){
+        return;
+    }
+
+    int parentIdx = indexOfTopLevelItem(item->parent());
+    int childIdx = item->parent()->indexOfChild(item);
+
+
+    if(item->checkState(2)){
+        E_Manager::Mgr()->SetLog("Add Ground Truth",NULL);
+        E_Manager::VolumeMgr()->AddGroundTruth(parentIdx, childIdx);
+    }else{
+        E_Manager::Mgr()->SetLog("Remove Ground Truth",NULL);
+        E_Manager::VolumeMgr()->RemoveGroundTruth();
+    }
+
+
+
+}
 
 
  void E_TreeWidgetVolume::onContextMenu( const QPoint & pos )
@@ -124,7 +166,7 @@ void E_TreeWidgetVolume::onImportGroundTruth(){
         E_Manager::Mgr()->SetLog("Import DICOM(*.dcm) Ground Truth File of ",  std::to_string(m_currentParentIdx), std::to_string(m_currentChildIdx), NULL);
         QDir directoryPath = info.dir();
         E_Manager::VolumeMgr()->ImportGroundTruth(directoryPath.absolutePath().toLocal8Bit().data(), m_currentParentIdx, m_currentChildIdx);
-
-        // UpdateVolumeTree();
     }
+
+    Update();
 }

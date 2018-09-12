@@ -24,15 +24,18 @@ class E_ImageSeries{
     DicomReader::Pointer m_imageContainer;
     ImageIOType::Pointer m_dicomIO;
     ImageType::Pointer m_groundTruth;
+    int m_numSlices;
 
 
     public:
+    int GetNumberOfSlices(){return m_numSlices;}
     DicomReader::Pointer GetImageContainer(){return m_imageContainer;}
-    ImageType::Pointer GetGroundTruth(){return m_groundTruth;}
+    
     std::string GetSeriesDescription();
 
     //Setters
     void SetGroundTruth(ImageType::Pointer gtdata){m_groundTruth = gtdata; }
+    ImageType::Pointer GetGroundTruth(){return m_groundTruth;}
 
     ///Dicom Info by its tag
     std::string GetDicomInfo(std::string tag);

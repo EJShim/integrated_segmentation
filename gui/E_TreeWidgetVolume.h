@@ -28,6 +28,7 @@ class E_TreeWidgetVolume : public QTreeWidget{
 
     public Q_SLOTS:
     void onItemDoubleClicked(QTreeWidgetItem* item, int column);
+    void onItemChanged(QTreeWidgetItem* item, int column);
     void onContextMenu(const QPoint& pos);
     void onImportGroundTruth();
 

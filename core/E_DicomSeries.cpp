@@ -36,33 +36,35 @@ void E_DicomSeries::SetPath(const char* path){
     while (seriesItr != seriesEnd)
     {
         std::vector<std::string> fileNames = nameGenerator->GetFileNames(seriesItr->c_str());
+
+        //If FileNames.size == 1, ignore
+        if(fileNames.size() == 1){
+            ++seriesItr;
+            continue;
+        }
         // if(fileNames.size() <= 1) continue;
 
         E_ImageSeries* imageSeries = new E_ImageSeries(fileNames);
 
-        // ///Define Reader
-        // DicomReader::Pointer reader = DicomReader::New();
-        // ImageIOType::Pointer dicomIO = ImageIOType::New();
-        // reader->SetImageIO(dicomIO);        
-        // reader->SetFileNames(fileNames);
-        // reader->Update();
-        // ///Add To Container
-        // m_imageContainer.push_back(reader);
 
         ///Get Study Description
         if(m_studyDescription.length() == descLength){
             m_studyDescription.append("(");
             m_studyDescription.append( imageSeries->GetDicomInfo("0008|1030") );
-            //m_studyDescription.append( GetDicomTag(dicomIO, "0008|1030") );
             m_studyDescription.append(")");
         }
-        // ///Add Study Description
-        // std::string seriesDescription = GetDicomTag(dicomIO, "0008|103e") + " (" + std::to_string(fileNames.size()) + ")" ;
-        // m_seriesDescription.push_back(seriesDescription);
 
         m_imageSeries.push_back(imageSeries);
 
         ++seriesItr;
+    }
+}
+
+bool E_DicomSeries::IsGroundTruthExist(int idx){
+    if(m_imageSeries[idx]->GetGroundTruth() == nullptr){
+        return false;
+    }else{
+        return true;
     }
 }
 

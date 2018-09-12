@@ -53,6 +53,8 @@ class E_VolumeManager{
     void ImportDicom(const char* path);
     void ImportGroundTruth(std::string path);
     void ImportGroundTruth(const char* path, int parentIdx, int childIdx);
+    void AddGroundTruth(int parentIdx, int childIdx);
+    void RemoveGroundTruth();
 
     //move slice
     void ForwardSlice(int idx);
