@@ -76,9 +76,6 @@ class E_Window : public QMainWindow{
     void ToggleAxlSlice(int state);
     void ToggleCorSlice(int state);
     void ToggleSagSlice(int state);
-    ///temporary
-    void ImportGT();
-
 
     
 };

@@ -55,10 +55,6 @@ QToolBar* E_Window::InitToolbar(){
     QAction* import_action = new QAction(QIcon(":/images/pantone-2.png") ,QString("Import Volume"), this);
     toolbar->addAction(import_action);
     connect(import_action, SIGNAL(triggered()), this, SLOT(ImportVolume()));    
-    //Import Ground Truth
-    QAction* gt_import_action = new QAction(QIcon(":/images/document.png"), QString("Import Ground Truth(temp)"), this);
-    toolbar->addAction(gt_import_action);
-    connect(gt_import_action, SIGNAL(triggered()), this, SLOT(ImportGT()));
 
 
     //Run Segmentation
@@ -254,17 +250,6 @@ void E_Window::OnSegmentationCalculated(int i, tensorflow::Tensor t){
 
 void E_Window::OnFinishedSegmentation(){
     std::cout << "segmentation finished" << std::endl;    
-}
-
-
-
-void E_Window::ImportGT(){
-    QString fileName = QFileDialog::getOpenFileName(this, ("Open File"),"~/..",
-                                                ("volumes (*.dcm *.nii"));
-
-    if(fileName == "") return;
-
-    E_Manager::VolumeMgr()->ImportGroundTruth(fileName.toStdString());
 }
 
 void E_Window::ToggleAxlSlice(int state){

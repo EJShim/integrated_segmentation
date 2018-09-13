@@ -14,6 +14,9 @@
 #include <vtkPlot.h>
 #include "E_Volume.h"
 
+#include <itkMinimumMaximumImageCalculator.h>
+#include "itkRescaleIntensityImageFilter.h"
+
 
 class E_VolumeManager{
     public:
@@ -26,6 +29,8 @@ class E_VolumeManager{
     typedef itk::ImageSeriesReader<ImageType> DicomReader;
     typedef itk::ImageToVTKImageFilter<ImageType> itkVtkConverter;
     typedef itk::OrientImageFilter<ImageType, ImageType> OrientImageFilterType;
+    typedef itk::MinimumMaximumImageCalculator<ImageType> ImageCalculatorFilterType;
+    typedef itk::RescaleIntensityImageFilter< ImageType, ImageType> ImageRescaleFilterType;
 
 
 
@@ -51,7 +56,6 @@ class E_VolumeManager{
     //Import Data
     void ImportNII(const char* path);
     void ImportDicom(const char* path);
-    void ImportGroundTruth(std::string path);
     void ImportGroundTruth(const char* path, int parentIdx, int childIdx);
     void AddGroundTruth(int parentIdx, int childIdx);
     void RemoveGroundTruth();
@@ -72,7 +76,6 @@ class E_VolumeManager{
     void UpdateHistogram();
 
     ///Add Selected Volume
-    vtkSmartPointer<vtkImageData> ConvertITKVolumeToVTKVolume(ImageType::Pointer itkImageData);
     void AddVolume(ImageType::Pointer itkImageData);
     void AddVolume(vtkSmartPointer<vtkImageData> vtkImageData);
     void AddSelectedVolume(int patientIdx, int seriesIdx);

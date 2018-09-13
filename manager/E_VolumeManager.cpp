@@ -16,7 +16,6 @@
 #include <vtkColorTransferFunctionItem.h>
 #include <vtkPiecewiseFunctionItem.h>
 #include <vtkPiecewiseControlPointsItem.h>
-
 #include <vtkFloatArray.h>
 #include <vtkTable.h>
 #include <vtkChartXY.h>
@@ -25,7 +24,7 @@
 #include <itkNiftiImageIO.h>
 #include "tensorflow/core/framework/tensor.h"
 #include <itkThresholdImageFilter.h>
-
+#include "itkBinaryThresholdImageFilter.h"
 #include "itkGDCMSeriesFileNames.h"
 #include <math.h>
 
@@ -52,8 +51,6 @@ void E_VolumeManager::ImportDicom(const char* path){
     m_patientList.push_back(series);
 
 }
-
-
 
 void E_VolumeManager::ImportNII(const char* path){
     // Make ITK Image Data    
@@ -83,11 +80,10 @@ void E_VolumeManager::ImportNII(const char* path){
 
     if(!m_bVolumeInRenderer){
         E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume);
-        for(int i=0 ; i<NUMSLICE ; i++){
-            vtkSmartPointer<vtkImageSlice> slice = m_volume->GetImageSlice(i);
-            E_Manager::Mgr()->GetRenderer(i+1)->AddViewProp(slice);
-        }
-        
+        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_AXL)->AddViewProp(m_volume->GetImageSlice(0));
+        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_COR)->AddViewProp(m_volume->GetImageSlice(1));
+        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_SAG)->AddViewProp(m_volume->GetImageSlice(2));
+
         m_bVolumeInRenderer = true;
     }
     else{
@@ -95,49 +91,6 @@ void E_VolumeManager::ImportNII(const char* path){
     }
 
     E_Manager::Mgr()->RedrawAll(true);
-}
-
-void E_VolumeManager::ImportGroundTruth(std::string path){
-    if(m_volume == NULL) return;
-
-    // Make ITK Image Data    
-    NIIReader::Pointer reader = NIIReader::New();
-    reader->SetFileName(path);
-    reader->Update();
-    ImageType::Pointer itkImageData = reader->GetOutput();
-
-            ///Add Orientation
-    OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
-    orienter->UseImageDirectionOn();
-    orienter->SetInput(itkImageData);
-    orienter->Update();
-    
-
-    // Convert to vtkimagedata    
-    itkVtkConverter::Pointer conv = itkVtkConverter::New();
-    conv->SetInput(orienter->GetOutput());
-    conv->Update();
-    
-    //Update GT Image to the volume
-    m_volume->SetGroundTruth(conv->GetOutput());
-
-    // Add To Renderer
-
-    if(!m_bGTInRenderer){
-        E_Manager::Mgr()->GetRenderer(0)->AddViewProp(m_volume->GetGroundTruthVolume());
-        for(int i=0 ; i<3 ; i++){
-            vtkSmartPointer<vtkImageSlice> slice = m_volume->GetGroundTruthImageSlice(i);
-            //E_Manager::Mgr()->GetRenderer(0)->AddViewProp(slice);
-            E_Manager::Mgr()->GetRenderer(i+1)->AddViewProp(slice);
-        }
-        m_bGTInRenderer = true;
-    }else{
-        UpdateVolume(m_volume->GetGroundTruthVolume());
-    }
-    
-    
-
-    E_Manager::Mgr()->RedrawAll(true);    
 }
 
 void E_VolumeManager::ImportGroundTruth(const char* path, int parentIdx, int childIdx){
@@ -159,19 +112,26 @@ void E_VolumeManager::ImportGroundTruth(const char* path, int parentIdx, int chi
     orienter->SetInput(container->GetOutput());
     orienter->Update();
 
+
+    ImageCalculatorFilterType::Pointer imageCalculatorFilter = ImageCalculatorFilterType::New ();
+    imageCalculatorFilter->SetImage(orienter->GetOutput());
+    imageCalculatorFilter->Compute();
+
     ///Threshold image, minimum -1024;
-    itk::ThresholdImageFilter<ImageType>::Pointer clipFilter = itk::ThresholdImageFilter<ImageType>::New();
-    clipFilter->SetInput(orienter->GetOutput());
-    clipFilter->ThresholdBelow(-1024);
-    // clipFilter->SetBelow
+    itk::BinaryThresholdImageFilter<ImageType, ImageType>::Pointer thresholdfilter = itk::BinaryThresholdImageFilter<ImageType, ImageType>::New();
+    thresholdfilter->SetInput(orienter->GetOutput());
+    thresholdfilter->SetLowerThreshold(imageCalculatorFilter->GetMaximum()-100);
+    thresholdfilter->SetUpperThreshold(imageCalculatorFilter->GetMaximum());
+    thresholdfilter->SetInsideValue(1);
+    thresholdfilter->SetOutsideValue(0);
+    thresholdfilter->Update();
 
 
-    ///Set Ground Truth
-    m_patientList[parentIdx]->SetGroundTruth(clipFilter->GetOutput(), childIdx);
 
-
+    
+    // Set Ground Truth
+    m_patientList[parentIdx]->SetGroundTruth(thresholdfilter->GetOutput(), childIdx);
     E_Manager::Mgr()->SetLog("Ground Truth Set", NULL);
-
 }
 
 void E_VolumeManager::ForwardSlice(int idx){
@@ -246,8 +206,8 @@ void E_VolumeManager::MakeBlankGroundTruth(){
 }
 
 void E_VolumeManager::UpdateVolume(vtkSmartPointer<vtkVolume> volume){
-    E_Manager::Mgr()->GetRenderer(0)->RemoveViewProp(volume);
-    E_Manager::Mgr()->GetRenderer(0)->AddViewProp(volume);
+    E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->RemoveViewProp(volume);
+    E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(volume);
 }
 
 
@@ -267,7 +227,6 @@ void E_VolumeManager::InitializeHistogram(){
     vtkSmartPointer<vtkColorTransferFunctionItem> colorFunctionItem = vtkSmartPointer<vtkColorTransferFunctionItem>::New();
     colorFunctionItem->SetColorTransferFunction(colorFunction);
     
-
     
     // Get Plot Renderer and Clear
     vtkSmartPointer<vtkChartXY> chart = E_Manager::Mgr()->GetHistogramPlot();
@@ -343,27 +302,6 @@ void E_VolumeManager::UpdateHistogram(){
     m_histogramGraph->SetInputData(table, 0, 1);
 }
 
-vtkSmartPointer<vtkImageData> E_VolumeManager::ConvertITKVolumeToVTKVolume(ImageType::Pointer itkImageData){
-    ///Add Orientation
-    OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
-    orienter->UseImageDirectionOn();
-    orienter->SetInput(itkImageData);
-    orienter->Update();
-
-    ///Threshold image, minimum -1024;
-    itk::ThresholdImageFilter<ImageType>::Pointer clipFilter = itk::ThresholdImageFilter<ImageType>::New();
-    clipFilter->SetInput(orienter->GetOutput());
-    clipFilter->ThresholdBelow(-1024);
-    // clipFilter->SetBelow
-
-    // Convert to vtkimagedataclear
-    itkVtkConverter::Pointer conv = itkVtkConverter::New();
-    conv->SetInput(clipFilter->GetOutput());
-    conv->Update();
-
-    return conv->GetOutput();
-}
-
 
 void E_VolumeManager::AddVolume(vtkSmartPointer<vtkImageData> vtkImageData){
 
@@ -375,10 +313,9 @@ void E_VolumeManager::AddVolume(vtkSmartPointer<vtkImageData> vtkImageData){
 
     if(!m_bVolumeInRenderer){
         E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume);
-        for(int i=0 ; i<NUMSLICE ; i++){
-            vtkSmartPointer<vtkImageSlice> slice = m_volume->GetImageSlice(i);
-            E_Manager::Mgr()->GetRenderer(i+1)->AddViewProp(slice);
-        }
+        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_AXL)->AddViewProp(m_volume->GetImageSlice(0));
+        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_COR)->AddViewProp(m_volume->GetImageSlice(1));
+        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_SAG)->AddViewProp(m_volume->GetImageSlice(2));
 
         //Add Histogram Items
         InitializeHistogram();
@@ -393,7 +330,7 @@ void E_VolumeManager::AddVolume(vtkSmartPointer<vtkImageData> vtkImageData){
 }
 
 void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
-    // RemoveGroundTruth();
+    RemoveGroundTruth();
 
        ///Add Orientation
     OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
@@ -405,36 +342,42 @@ void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
     itk::ThresholdImageFilter<ImageType>::Pointer clipFilter = itk::ThresholdImageFilter<ImageType>::New();
     clipFilter->SetInput(orienter->GetOutput());
     clipFilter->ThresholdBelow(-1024);
-    // clipFilter->SetBelow
+    clipFilter->Update();
 
     // Convert to vtkimagedataclear
     itkVtkConverter::Pointer conv = itkVtkConverter::New();
     conv->SetInput(clipFilter->GetOutput());
     conv->Update();
 
-        //Make Volume
-    if(m_volume == NULL){
-        m_volume = vtkSmartPointer<E_Volume>::New();        
-    }
-    m_volume->SetImageData(conv->GetOutput());
 
-    if(!m_bVolumeInRenderer){
-        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume);
-        for(int i=0 ; i<NUMSLICE ; i++){
-            vtkSmartPointer<vtkImageSlice> slice = m_volume->GetImageSlice(i);
-            E_Manager::Mgr()->GetRenderer(i+1)->AddViewProp(slice);
-        }
+    AddVolume(conv->GetOutput());
 
-        //Add Histogram Items
-        InitializeHistogram();
+
+    //     //Make Volume
+    // if(m_volume == NULL){
+    //     m_volume = vtkSmartPointer<E_Volume>::New();        
+    // }
+    // m_volume->SetImageData(conv->GetOutput());
+
+    // if(!m_bVolumeInRenderer){
+    //     //Add Volume
+    //     E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume);
+
+    //     //Add Slice
+    //     E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_AXL)->AddViewProp(m_volume->GetImageSlice(0));
+    //     E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_COR)->AddViewProp(m_volume->GetImageSlice(1));
+    //     E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_SAG)->AddViewProp(m_volume->GetImageSlice(2));
+
+    //     //Add Histogram Items
+    //     InitializeHistogram();
         
-        m_bVolumeInRenderer = true;
-    }
-    else{
-        UpdateVolume(m_volume);
-    }
+    //     m_bVolumeInRenderer = true;
+    // }
+    // else{
+    //     UpdateVolume(m_volume);
+    // }
 
-    UpdateHistogram();
+    // UpdateHistogram();
 
 }
 
@@ -474,8 +417,6 @@ void E_VolumeManager::AddGroundTruth(int parentIdx, int childIdx){
     ///Set Ground Truth
     ImageType::Pointer itkImage = m_patientList[parentIdx]->GetGroundTruth(childIdx);
 
-/////////////////////////////////////////////////////////////////////////////////////////////
-    
     // Convert to vtkimagedata    
     itkVtkConverter::Pointer conv = itkVtkConverter::New();
     conv->SetInput(itkImage);
@@ -483,39 +424,31 @@ void E_VolumeManager::AddGroundTruth(int parentIdx, int childIdx){
     
     //Update GT Image to the volume
     m_volume->SetGroundTruth(conv->GetOutput());
-
+    
     // Add To Renderer
-
     if(!m_bGTInRenderer){
-        E_Manager::Mgr()->GetRenderer(0)->AddViewProp(m_volume->GetGroundTruthVolume());
-        for(int i=0 ; i<3 ; i++){
-            vtkSmartPointer<vtkImageSlice> slice = m_volume->GetGroundTruthImageSlice(i);
-            //E_Manager::Mgr()->GetRenderer(0)->AddViewProp(slice);
-            E_Manager::Mgr()->GetRenderer(i+1)->AddViewProp(slice);
-        }
+        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume->GetGroundTruthVolume());
+        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_AXL)->AddViewProp(m_volume->GetGroundTruthImageSlice(0));
+        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_COR)->AddViewProp(m_volume->GetGroundTruthImageSlice(1));
+        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_SAG)->AddViewProp(m_volume->GetGroundTruthImageSlice(2));
+    
         m_bGTInRenderer = true;
     }else{
         UpdateVolume(m_volume->GetGroundTruthVolume());
     }
-    
-    
-
-    E_Manager::Mgr()->RedrawAll(true);
+    E_Manager::Mgr()->RedrawAll(false);
 
 }
 
 void E_VolumeManager::RemoveGroundTruth(){
-    if(m_volume->GetGroundTruthVolume() == NULL) return;
+    if(!m_bGTInRenderer) return;
     
-    //Show Ground Truth Volume
+    //Remove Ground Truth Volume And Slice
     E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->RemoveViewProp(m_volume->GetGroundTruthVolume());
-    for(int i=0 ; i<3 ; i++){
-        vtkSmartPointer<vtkImageSlice> slice = m_volume->GetGroundTruthImageSlice(i);
-        // E_Manager::Mgr()->GetRenderer(0)->RemoveViewProp(slice);
-        E_Manager::Mgr()->GetRenderer(i+1)->RemoveViewProp(slice);
-    }
-    E_Manager::Mgr()->RedrawAll(false);   
+    E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_AXL)->RemoveViewProp(m_volume->GetGroundTruthImageSlice(0));
+    E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_COR)->RemoveViewProp(m_volume->GetGroundTruthImageSlice(1));
+    E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_SAG)->RemoveViewProp(m_volume->GetGroundTruthImageSlice(2));
+    E_Manager::Mgr()->RedrawAll(false);
 
-    
-
+    m_bGTInRenderer = false;
 }

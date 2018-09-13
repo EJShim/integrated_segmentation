@@ -123,7 +123,7 @@ void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
         m_gt_opacityFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
     }
     m_gt_opacityFunction->AddPoint(0, 0.0);
-    m_gt_opacityFunction->AddPoint(1, 0.2);
+    m_gt_opacityFunction->AddPoint(1, 1.0);
     m_gt_opacityFunction->AddPoint(2, 1.0);
 
 
