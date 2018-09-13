@@ -1,3 +1,5 @@
+#pragma once
+
 #include <QMainWindow>
 #include <QToolBar>
 #include <QVTKOpenGLWidget.h>
@@ -21,6 +23,9 @@ class E_Window : public QMainWindow{
     public:
     E_Window(QWidget *parent = 0);
     ~E_Window();
+
+    //Directory Path
+    static QString DIRPATH;
     
     protected:
     // Fix screen size for gui scale factor

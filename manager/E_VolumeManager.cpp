@@ -86,9 +86,6 @@ void E_VolumeManager::ImportNII(const char* path){
 
         m_bVolumeInRenderer = true;
     }
-    else{
-        UpdateVolume(m_volume);
-    }
 
     E_Manager::Mgr()->RedrawAll(true);
 }
@@ -205,12 +202,6 @@ void E_VolumeManager::MakeBlankGroundTruth(){
     E_Manager::Mgr()->RedrawAll(false);    
 }
 
-void E_VolumeManager::UpdateVolume(vtkSmartPointer<vtkVolume> volume){
-    E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->RemoveViewProp(volume);
-    E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(volume);
-}
-
-
 void E_VolumeManager::InitializeHistogram(){
  // Get Plot Data
     vtkSmartPointer<vtkImageData> imageData = m_volume->GetImageData();
@@ -322,9 +313,6 @@ void E_VolumeManager::AddVolume(vtkSmartPointer<vtkImageData> vtkImageData){
         
         m_bVolumeInRenderer = true;
     }
-    else{
-        UpdateVolume(m_volume);
-    }
 
     UpdateHistogram();
 }
@@ -351,33 +339,6 @@ void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
 
 
     AddVolume(conv->GetOutput());
-
-
-    //     //Make Volume
-    // if(m_volume == NULL){
-    //     m_volume = vtkSmartPointer<E_Volume>::New();        
-    // }
-    // m_volume->SetImageData(conv->GetOutput());
-
-    // if(!m_bVolumeInRenderer){
-    //     //Add Volume
-    //     E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume);
-
-    //     //Add Slice
-    //     E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_AXL)->AddViewProp(m_volume->GetImageSlice(0));
-    //     E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_COR)->AddViewProp(m_volume->GetImageSlice(1));
-    //     E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_SAG)->AddViewProp(m_volume->GetImageSlice(2));
-
-    //     //Add Histogram Items
-    //     InitializeHistogram();
-        
-    //     m_bVolumeInRenderer = true;
-    // }
-    // else{
-    //     UpdateVolume(m_volume);
-    // }
-
-    // UpdateHistogram();
 
 }
 
@@ -424,7 +385,7 @@ void E_VolumeManager::AddGroundTruth(int parentIdx, int childIdx){
     
     //Update GT Image to the volume
     m_volume->SetGroundTruth(conv->GetOutput());
-    
+
     // Add To Renderer
     if(!m_bGTInRenderer){
         E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume->GetGroundTruthVolume());
@@ -433,8 +394,6 @@ void E_VolumeManager::AddGroundTruth(int parentIdx, int childIdx){
         E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_SAG)->AddViewProp(m_volume->GetGroundTruthImageSlice(2));
     
         m_bGTInRenderer = true;
-    }else{
-        UpdateVolume(m_volume->GetGroundTruthVolume());
     }
     E_Manager::Mgr()->RedrawAll(false);
 

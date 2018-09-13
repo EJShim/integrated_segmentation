@@ -6,6 +6,7 @@
 #include <QSignalMapper>
 #include <QFileDialog>
 #include <QHeaderView>
+#include <E_Window.h>
 
 E_TreeWidgetVolume::E_TreeWidgetVolume(QWidget *parent){
     
@@ -151,8 +152,11 @@ void E_TreeWidgetVolume::onItemChanged(QTreeWidgetItem* item, int column){
 void E_TreeWidgetVolume::onImportGroundTruth(){
     if(m_currentParentIdx == -1 || m_currentChildIdx == -1) return;
 
-    QString fileName = QFileDialog::getOpenFileName(this, ("Open File"),"~/..", tr("Dicom file(*.dcm) ;; NII file(*.nii)"));
+    QString fileName = QFileDialog::getOpenFileName(this, ("Open File"), E_Window::DIRPATH , tr("Dicom file(*.dcm) ;; NII file(*.nii)"));
+    
     if(fileName.length() < 1) return;
+    
+    E_Window::DIRPATH = QDir(fileName).absolutePath();
     QFileInfo info(fileName);
     QString ext = info.completeSuffix();
 

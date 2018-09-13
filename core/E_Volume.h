@@ -16,6 +16,7 @@
 
 class E_Volume : public vtkVolume{
     public:
+    enum{AXL, COR, SAG};
     vtkTypeMacro(E_Volume, vtkVolume);
     static E_Volume *New() {return new E_Volume;}
 

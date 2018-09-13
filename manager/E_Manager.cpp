@@ -12,6 +12,7 @@
 #include <vtkContextInteractorStyle.h>
 
 E_Manager::E_Manager(){
+
     this->Initialize();
 }
 
@@ -141,6 +142,9 @@ void E_Manager::Redraw(int idx, bool reset){
             this->m_renderer[idx]->GetActiveCamera()->Zoom(1.5);
         }
     }
+
+    double* pos = m_renderer[VIEW_SAG]->GetActiveCamera()->GetPosition();
+    double* focal = m_renderer[VIEW_SAG]->GetActiveCamera()->GetFocalPoint();
 
     // this->m_renderer[idx]->Render();
     this->m_renderer[idx]->GetRenderWindow()->Render();

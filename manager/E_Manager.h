@@ -1,3 +1,4 @@
+#pragma once
 #include <QVTKOpenGLWidget.h>
 #include <QDockWidget>
 #include <QListWidget>
@@ -6,7 +7,7 @@
 #include <vtkContextView.h>
 #include <vtkChartXY.h>
 #include <E_ContextInteractorStyle.h>
-
+#include <QString>
 
 #include "E_VolumeManager.h"
 
@@ -50,6 +51,7 @@ class E_Manager{
     ///Set Log
     void SetLogWidget(QDockWidget* widgetDocker);
     void SetLog(const char *arg, ...);
+
 
 
     protected:

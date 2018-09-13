@@ -39,6 +39,10 @@ E_Window::~E_Window(){
         
 }
 
+
+//Here should import previous path from resouce,, dunno this is the right way..
+QString E_Window::DIRPATH = QDir::homePath();
+
 QToolBar* E_Window::InitToolbar(){
 
     QRect rec = QApplication::desktop()->screenGeometry();
@@ -184,9 +188,10 @@ void E_Window::UpdateVolumeTree(){
 ////////////////////////////////////////////////////////////////////Action SLOTS////////////////////////////////////////////////////////
 void E_Window::ImportVolume(){    
     
-    QString fileName = QFileDialog::getOpenFileName(this, ("Open File"),"~/..", tr("Dicom file(*.dcm) ;; NII file(*.nii)"));
+    QString fileName = QFileDialog::getOpenFileName(this, ("Open File"), DIRPATH , tr("Dicom file(*.dcm) ;; NII file(*.nii)"));
 
     if(fileName.length() < 1) return;
+    DIRPATH = QDir(fileName).absolutePath();
     QFileInfo info(fileName);
     QString ext = info.completeSuffix();
 
@@ -204,6 +209,7 @@ void E_Window::ImportVolume(){
 
         UpdateVolumeTree();
     }
+
 
 }
 
@@ -240,11 +246,9 @@ void E_Window::OnSegmentationCalculated(int i, tensorflow::Tensor t){
     // Update Animation    
     E_Manager::VolumeMgr()->GetCurrentVolume()->SetSlice(2, i);
     E_Manager::VolumeMgr()->GetCurrentVolume()->AssignGroundTruthVolume(i, t);
-    E_Manager::VolumeMgr()->UpdateVolume(E_Manager::VolumeMgr()->GetCurrentVolume()->GetGroundTruthVolume());
+    // E_Manager::VolumeMgr()->UpdateVolume(E_Manager::VolumeMgr()->GetCurrentVolume()->GetGroundTruthVolume());
 
-    // E_Manager::Mgr()->Redraw(0);
-    // E_Manager::Mgr()->Redraw(3);
-    E_Manager::Mgr()->RedrawAll();
+    E_Manager::Mgr()->RedrawAll(false);
     
 }
 

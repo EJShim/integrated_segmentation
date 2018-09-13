@@ -176,7 +176,23 @@ void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
             m_gt_imageSlice[i] = vtkSmartPointer<vtkImageSlice>::New();
             m_gt_imageSlice[i]->SetProperty(m_gt_imageProperty);
             m_gt_imageSlice[i]->SetMapper(m_gt_sliceMapper[i]);
-        }        
+            
+            double* position = m_gt_imageSlice[i]->GetPosition();
+            switch(i){
+                case AXL:
+                m_gt_imageSlice[i]->SetPosition(position[0]-10, position[1], position[2]);
+                break;
+                case COR:
+                m_gt_imageSlice[i]->SetPosition(position[0], position[1]+10, position[2]);
+                break;
+                case SAG:
+                break;
+                m_gt_imageSlice[i]->SetPosition(position[0], position[1], position[2]-10);
+                default:
+                break;
+            }
+            
+        }
     }
 
     for(int i=0 ; i<3 ; i++){

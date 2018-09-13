@@ -71,7 +71,6 @@ class E_VolumeManager{
     void MakeBlankGroundTruth();
 
     /// Because of bug
-    void UpdateVolume(vtkSmartPointer<vtkVolume> volume);
     void InitializeHistogram();
     void UpdateHistogram();
 
