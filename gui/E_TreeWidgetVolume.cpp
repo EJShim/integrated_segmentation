@@ -100,6 +100,19 @@ void E_TreeWidgetVolume::Update(){
     int childIdx = item->parent()->indexOfChild(item);
 
     E_Manager::VolumeMgr()->AddSelectedVolume(parentIdx, childIdx);
+
+
+    //Remove All Checkboxes
+
+    for(int i=0 ; i<topLevelItemCount() ; i++){
+        QTreeWidgetItem* toplevelItem = topLevelItem(i);
+        for(int j=0 ; j<toplevelItem->childCount() ; j++){
+            QTreeWidgetItem* item = toplevelItem->child(j);
+            if(item->checkState(2) == Qt::Checked){
+                item->setCheckState(2, Qt::Unchecked);
+            }
+        }
+    }
  }
 
 void E_TreeWidgetVolume::onItemChanged(QTreeWidgetItem* item, int column){
@@ -114,8 +127,23 @@ void E_TreeWidgetVolume::onItemChanged(QTreeWidgetItem* item, int column){
 
 
     if(item->checkState(2)){
+        //Uncheck all the other checkboxes, remove existing ground truth
+        for(int i=0 ; i<topLevelItemCount() ; i++){
+            QTreeWidgetItem* toplevelItem = topLevelItem(i);
+            for(int j=0 ; j<toplevelItem->childCount() ; j++){
+                if(i == parentIdx && j == childIdx) continue;
+
+                QTreeWidgetItem* item = toplevelItem->child(j);
+                if(item->checkState(2) == Qt::Checked){
+                    item->setCheckState(2, Qt::Unchecked);
+                }
+            }
+        }
+
+        //Add selected ground truth
         E_Manager::Mgr()->SetLog("Add Ground Truth",NULL);
         E_Manager::VolumeMgr()->AddGroundTruth(parentIdx, childIdx);
+
     }else{
         E_Manager::Mgr()->SetLog("Remove Ground Truth",NULL);
         E_Manager::VolumeMgr()->RemoveGroundTruth();

@@ -79,8 +79,9 @@ void E_Volume::SetImageData(vtkSmartPointer<vtkImageData> imageData){
         m_imageProperty->SetInterpolationTypeToLinear();
     }
     double* scalarRange = m_imageData->GetScalarRange();
-    m_imageProperty->SetColorLevel( (scalarRange[1]+scalarRange[0])/2.0 );
-    m_imageProperty->SetColorWindow(scalarRange[1] - scalarRange[0] - 1.0);
+    double huRange[2] = {-1024, 3096};
+    m_imageProperty->SetColorLevel((huRange[1]+huRange[0])/2.0);
+    m_imageProperty->SetColorWindow(huRange[1]-huRange[0]-1.0);
 
     if(m_imageSlice[0] == NULL){
         for(int i=0 ; i<3 ; i++){
@@ -272,20 +273,24 @@ void E_Volume::SetTransferFunction(int idx){
     m_opacityFunction->RemoveAllPoints();
     
     
+
+    //Adjust CT Scalar Range
     double* scalarRange = m_imageData->GetScalarRange();
-    // int maskClipIndex = 12807;
-    // int upperClipIndex = 12808;
-    
+    double huRange[2] = {-1024, 3096};
     
     switch(idx){
         case 0:
 
         //Color Funciton
-        m_colorFunction->AddRGBPoint(scalarRange[0], 1.0, 1.0, 1.0);  
+        m_colorFunction->AddRGBPoint(scalarRange[0], 1.0, 1.0, 1.0);
+        m_colorFunction->AddRGBPoint(huRange[0], 1.0, 1.0, 1.0);
+        m_colorFunction->AddRGBPoint(huRange[1], 1.0, 1.0, 1.0);
         m_colorFunction->AddRGBPoint(scalarRange[1], 1.0, 1.0, 1.0);
 
         //Opacity FUnction
         m_opacityFunction->AddPoint(scalarRange[0], 0.0);
+        m_opacityFunction->AddPoint(huRange[0], 0.0);
+        m_opacityFunction->AddPoint(huRange[1], 1.0);
         m_opacityFunction->AddPoint(scalarRange[1], 1.0);
 
         break;
