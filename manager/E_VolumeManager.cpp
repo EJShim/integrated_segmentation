@@ -117,7 +117,7 @@ void E_VolumeManager::ImportGroundTruth(const char* path, int parentIdx, int chi
     ///Threshold image, minimum -1024;
     itk::BinaryThresholdImageFilter<ImageType, ImageType>::Pointer thresholdfilter = itk::BinaryThresholdImageFilter<ImageType, ImageType>::New();
     thresholdfilter->SetInput(orienter->GetOutput());
-    thresholdfilter->SetLowerThreshold(imageCalculatorFilter->GetMaximum()-100);
+    thresholdfilter->SetLowerThreshold(imageCalculatorFilter->GetMaximum());
     thresholdfilter->SetUpperThreshold(imageCalculatorFilter->GetMaximum());
     thresholdfilter->SetInsideValue(1);
     thresholdfilter->SetOutsideValue(0);

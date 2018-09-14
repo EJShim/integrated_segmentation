@@ -18,6 +18,16 @@ E_Window::E_Window(QWidget* parent):QMainWindow(parent){
     int height = rec.height();
     int width = rec.width();
     m_screenSize = sqrt(pow(height, 2) + pow(width, 2));
+
+
+    // Initialize DIR PATh
+    // QString metapath = QDir::tempPath + QString("/segmentation.tmp");
+    // if(!QDir(metapath).exist()){
+    //     QDir().mkdir(metapath);
+    // }
+    // DIRPATH =  QDir::tempPath();
+
+
     
 
 
