@@ -329,7 +329,7 @@ void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
     ///Threshold image, minimum -1024;
     itk::ThresholdImageFilter<ImageType>::Pointer clipFilter = itk::ThresholdImageFilter<ImageType>::New();
     clipFilter->SetInput(orienter->GetOutput());
-    clipFilter->ThresholdBelow(-1024);
+    clipFilter->ThresholdOutside(-1024, 3096);
     clipFilter->Update();
 
     // Convert to vtkimagedataclear
