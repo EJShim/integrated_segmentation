@@ -333,14 +333,17 @@ void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
     clipFilter->SetOutsideValue(-1024);
     clipFilter->Update();
 
+    //Maybe,, have to make new threshold filter here
     // clipFilter->SetInput(clipFilter->GetOutput());
-    clipFilter->ThresholdAbove(3096);
-    clipFilter->SetOutsideValue(0);
-    clipFilter->Update();
+    itk::ThresholdImageFilter<ImageType>::Pointer upperclipFilter = itk::ThresholdImageFilter<ImageType>::New();
+    upperclipFilter->SetInput(clipFilter->GetOutput());
+    upperclipFilter->ThresholdAbove(3096);
+    upperclipFilter->SetOutsideValue(0);
+    upperclipFilter->Update();
 
     // Convert to vtkimagedataclear
     itkVtkConverter::Pointer conv = itkVtkConverter::New();
-    conv->SetInput(clipFilter->GetOutput());
+    conv->SetInput(upperclipFilter->GetOutput());
     conv->Update();
 
 
