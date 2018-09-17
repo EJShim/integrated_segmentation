@@ -24,7 +24,7 @@ class E_VolumeManager{
     static const int NUMSLICE = 3;
 
     ///ITK Image Type
-    typedef itk::Image<float, 3> ImageType;
+    typedef itk::Image<short, 3> ImageType;
     typedef itk::ImageFileReader<ImageType> NIIReader;
     typedef itk::ImageSeriesReader<ImageType> DicomReader;
     typedef itk::ImageToVTKImageFilter<ImageType> itkVtkConverter;
