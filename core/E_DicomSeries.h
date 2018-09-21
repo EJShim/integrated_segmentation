@@ -18,7 +18,7 @@ class E_DicomSeries{
     ~E_DicomSeries();
 
     
-    typedef itk::Image<short, 3> ImageType;
+    typedef itk::Image<float, 3> ImageType;
     typedef itk::ImageSeriesReader<ImageType> DicomReader;
     typedef itk::GDCMImageIO ImageIOType;
 
@@ -50,6 +50,9 @@ class E_DicomSeries{
     // std::vector<DicomReader::Pointer> &GetImageContainer(){return m_imageContainer;}
     DicomReader::Pointer GetImageContainer(int idx){return m_imageSeries[idx]->GetImageContainer();}
 
+    //Return image with basic-preprocessing
+    ImageType::Pointer GetImageData(int idx){return m_imageSeries[idx]->GetImageData();}
+    
     /// Get Series Description in STring
     // std::vector<std::string> &GetSeriesDescription(){return m_seriesDescription;}
     std::string GetSeriesDescription(int idx){return m_imageSeries[idx]->GetSeriesDescription();}

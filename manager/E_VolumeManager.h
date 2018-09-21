@@ -24,7 +24,7 @@ class E_VolumeManager{
     static const int NUMSLICE = 3;
 
     ///ITK Image Type
-    typedef itk::Image<short, 3> ImageType;
+    typedef itk::Image<float, 3> ImageType;
     typedef itk::ImageFileReader<ImageType> NIIReader;
     typedef itk::ImageSeriesReader<ImageType> DicomReader;
     typedef itk::ImageToVTKImageFilter<ImageType> itkVtkConverter;
@@ -41,6 +41,9 @@ class E_VolumeManager{
     protected:   
     bool m_bVolumeInRenderer;
     bool m_bGTInRenderer;
+    int m_currentSelectedParentIdx;
+    int m_currentSelectedSeries;
+
     QComboBox* m_comboBox;
     
     vtkSmartPointer<E_Volume> m_volume;
@@ -53,8 +56,7 @@ class E_VolumeManager{
     vtkSmartPointer<vtkPlot> m_histogramGraph;
 
     public:
-    //Import Data
-    void ImportNII(const char* path);
+    //Import Data    
     void ImportDicom(const char* path);
     void ImportGroundTruth(const char* path, int parentIdx, int childIdx);
     void AddGroundTruth(int parentIdx, int childIdx);
@@ -84,13 +86,12 @@ class E_VolumeManager{
     /// Set OTF Control Combo Box
     void SetComboBox(QComboBox* comboBox){m_comboBox = comboBox;}
 
-    public:
-
     vtkSmartPointer<E_Volume> GetCurrentVolume(){return m_volume;}
-
     ///Get Volume List
     std::vector<E_DicomSeries*> &GetVolumeList(){return m_patientList;}
 
+    protected:
+    vtkSmartPointer<vtkImageData> ConvertITKtoVTKImageData(ImageType::Pointer itkImage);
 };
 
 #endif //E_VOLUMEMANAGER_H

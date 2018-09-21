@@ -26,26 +26,27 @@ void E_SegmentationThread::process(){
     qRegisterMetaType<tensorflow::Tensor>("tensorflow::Tensor");
 
     //temp - use resource in the future
-    std::string path = "D:/projects/weights";
+    std::string path = "D:/projects/integrated_segmentation/build/bin/temp_saved";
     tensorflow::SavedModelBundle bundle;
     //why should I do tensorflow:: here??
-    tensorflow::LoadSavedModel(tensorflow::SessionOptions(), tensorflow::RunOptions(), path, {"serve"}, &bundle);
+    tensorflow::LoadSavedModel(tensorflow::SessionOptions(), tensorflow::RunOptions(), path, {"ejshim"}, &bundle);
     tensorflow::Session* session = bundle.session.get();
     
-    for(int z=2; z<m_dims[2]-2 ; z++){
-        vtkSmartPointer<vtkImageData> slice = GetSingleBatchImage(z);
-        tensorflow::Tensor singleBatch = ConvertImageToTensor(slice);
-
-        // Run the session, evaluating our "c" operation from the graph  
-        std::vector<tensorflow::Tensor> preprocessed_outputs;
+    
+    //Iterate Over y-axis, it is axial image
+    for(int y=2; y<m_dims[1]-2 ; y++){
+        vtkSmartPointer<vtkImageData> slice = GetSingleBatchImage(y);
+        
+        int* dims = slice->GetDimensions();
+        tensorflow::Tensor singleBatch(tensorflow::DT_FLOAT, {1, dims[0], dims[1], dims[2]});
+        memcpy( singleBatch.tensor<float,4>().data(), slice->GetScalarPointer(), singleBatch.TotalBytes());
+        
+        // // Run the session, evaluating our "c" operation from the graph          
         std::vector<tensorflow::Tensor> outputs;
-        session->Run({{ "ej_input", singleBatch }}, {"EJ_PREPROCESSED"}, {}, &preprocessed_outputs);
-        session->Run({{ "input_1", preprocessed_outputs[0] }}, {"EJ_OUTPUT"}, {}, &outputs);
-
-        // std::cout << "processing " << z << " out of " << m_dims[2]-3  << std::endl;
+        session->Run({{ "input_ejshim", singleBatch }}, {"output_ejshim"}, {}, &outputs);
 
         //Emit Signal
-        emit onCalculated(z, outputs[0]);
+        emit onCalculated(y, outputs[0]);
     }
 
     emit finished();
@@ -64,7 +65,7 @@ vtkSmartPointer<vtkImageData> E_SegmentationThread::GetSingleBatchImage(int slic
     vtkSmartPointer<vtkExtractVOI> batchExtractor = vtkSmartPointer<vtkExtractVOI>::New();
     batchExtractor->SetInputData(m_imageData);
 
-    batchExtractor->SetVOI(32, m_dims[0]-32-1, 32, m_dims[1]-32-1, slice-2, slice+2);
+    batchExtractor->SetVOI(0, m_dims[0]-1, slice-2, slice+2, 0, m_dims[2]-1);
     batchExtractor->Update();    
 
     return batchExtractor->GetOutput();   

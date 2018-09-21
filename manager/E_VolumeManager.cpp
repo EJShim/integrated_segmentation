@@ -20,7 +20,7 @@
 #include <vtkTable.h>
 #include <vtkChartXY.h>
 #include <vtkAxis.h>
-
+#include <itkImageDuplicator.h>
 #include <itkNiftiImageIO.h>
 #include "tensorflow/core/framework/tensor.h"
 #include <itkThresholdImageFilter.h>
@@ -37,6 +37,9 @@ E_VolumeManager::E_VolumeManager(){
     m_bGTInRenderer = false;
 
     m_histogramGraph = NULL;
+
+    m_currentSelectedParentIdx = -1;
+    m_currentSelectedSeries = -1;
     
 }
 
@@ -52,44 +55,6 @@ void E_VolumeManager::ImportDicom(const char* path){
 
 }
 
-void E_VolumeManager::ImportNII(const char* path){
-    // Make ITK Image Data    
-    NIIReader::Pointer reader = NIIReader::New();
-    reader->SetFileName(path);
-    reader->Update();
-    ImageType::Pointer itkImageData = reader->GetOutput();
-
-        ///Add Orientation
-    OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
-    orienter->UseImageDirectionOn();
-    orienter->SetInput(itkImageData);
-    orienter->Update();
-    
-    // Convert to vtkimagedataclear
-    itkVtkConverter::Pointer conv = itkVtkConverter::New();
-    conv->SetInput(orienter->GetOutput());
-    conv->Update();
-
-    //Make Volume
-    if(m_volume == NULL){
-        m_volume = vtkSmartPointer<E_Volume>::New();
-        // m_comboBox->setEnabled(true);
-    }
-    m_volume->SetImageData(conv->GetOutput());
-    
-
-    if(!m_bVolumeInRenderer){
-        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume);
-        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_AXL)->AddViewProp(m_volume->GetImageSlice(0));
-        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_COR)->AddViewProp(m_volume->GetImageSlice(1));
-        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_SAG)->AddViewProp(m_volume->GetImageSlice(2));
-
-        m_bVolumeInRenderer = true;
-    }
-
-    E_Manager::Mgr()->RedrawAll(true);
-}
-
 void E_VolumeManager::ImportGroundTruth(const char* path, int parentIdx, int childIdx){
 
     E_DicomSeries* series = new E_DicomSeries();
@@ -103,29 +68,20 @@ void E_VolumeManager::ImportGroundTruth(const char* path, int parentIdx, int chi
     //Get ImageData
     DicomReader::Pointer container = series->GetImageContainer(0);
 
-           ///Add Orientation
-    OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
-    orienter->UseImageDirectionOn();
-    orienter->SetInput(container->GetOutput());
-    orienter->Update();
-
 
     ImageCalculatorFilterType::Pointer imageCalculatorFilter = ImageCalculatorFilterType::New ();
-    imageCalculatorFilter->SetImage(orienter->GetOutput());
+    imageCalculatorFilter->SetImage(container->GetOutput());
     imageCalculatorFilter->Compute();
 
     ///Threshold image, minimum -1024;
     itk::BinaryThresholdImageFilter<ImageType, ImageType>::Pointer thresholdfilter = itk::BinaryThresholdImageFilter<ImageType, ImageType>::New();
-    thresholdfilter->SetInput(orienter->GetOutput());
+    thresholdfilter->SetInput(container->GetOutput());
     thresholdfilter->SetLowerThreshold(imageCalculatorFilter->GetMaximum());
     thresholdfilter->SetUpperThreshold(imageCalculatorFilter->GetMaximum());
     thresholdfilter->SetInsideValue(1);
     thresholdfilter->SetOutsideValue(0);
     thresholdfilter->Update();
 
-
-
-    
     // Set Ground Truth
     m_patientList[parentIdx]->SetGroundTruth(thresholdfilter->GetOutput(), childIdx);
     E_Manager::Mgr()->SetLog("Ground Truth Set", NULL);
@@ -170,35 +126,31 @@ void E_VolumeManager::Toggle3DSlice(int idx, int state){
 }
 
 void E_VolumeManager::MakeBlankGroundTruth(){
-    if(m_volume == NULL) return;    
+    if(m_volume == NULL|| m_currentSelectedParentIdx==-1 || m_currentSelectedSeries == -1) return;
 
-    vtkSmartPointer<vtkImageData> imageData = vtkSmartPointer<vtkImageData>::New();
-    imageData->DeepCopy(m_volume->GetImageData());
+    ////////////Here, Use ITK
+    ImageType::Pointer itkImage = m_patientList[m_currentSelectedParentIdx]->GetImageData(m_currentSelectedSeries);
 
-    int* dims = imageData->GetDimensions();
+        
+    //Deep Copy Current Image
+    typedef itk::ImageDuplicator<ImageType> DuplicatorType;
+    DuplicatorType::Pointer duplicator = DuplicatorType::New();
+    duplicator->SetInputImage(itkImage);
+    duplicator->Update();
+    ImageType::Pointer gtImage = duplicator->GetOutput();
 
-    vtkSmartPointer<vtkExtractVOI> extractVOI = vtkSmartPointer<vtkExtractVOI>::New();
-    extractVOI->SetInputData(imageData);
-    extractVOI->SetVOI(32, dims[0]-32-1, 32, dims[1]-32-1, 0, dims[2]);
-    extractVOI->Update();
+    //Make Zero Tensor
+    ImageType::SizeType size = gtImage->GetLargestPossibleRegion().GetSize();
+    tensorflow::Tensor zero_tensor(tensorflow::DT_FLOAT, {int(size[0]), int(size[1]), int(size[2])});
+    memcpy(gtImage->GetBufferPointer(), zero_tensor.tensor_data().data(), zero_tensor.TotalBytes());
 
-    vtkSmartPointer<vtkImageData> croppedVolume = extractVOI->GetOutput();
-    dims = croppedVolume->GetDimensions();
+    //Set Ground Truth
+    m_patientList[m_currentSelectedParentIdx]->SetGroundTruth(gtImage, m_currentSelectedSeries);
 
-    //Set volume to zero
-    tensorflow::Tensor zero_tensor(tensorflow::DT_FLOAT, { dims[0], dims[1], dims[2]});
-    int* pointer = static_cast<int*>(croppedVolume->GetScalarPointer());
-    std::copy_n(zero_tensor.tensor<float,3>().data(), zero_tensor.tensor<float,3>().size(), pointer);
-
-    m_volume->SetGroundTruth(croppedVolume);
+    //Add To Renderer
+    AddGroundTruth(m_currentSelectedParentIdx, m_currentSelectedSeries);
     
-    //Show Ground Truth Volume
-    E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume->GetGroundTruthVolume());
-    for(int i=0 ; i<3 ; i++){
-        vtkSmartPointer<vtkImageSlice> slice = m_volume->GetGroundTruthImageSlice(i);
-        E_Manager::Mgr()->GetRenderer(0)->AddViewProp(slice);
-        E_Manager::Mgr()->GetRenderer(i+1)->AddViewProp(slice);
-    }
+    std::cout << "ground truth added" << std::endl;
     E_Manager::Mgr()->RedrawAll(false);    
 }
 
@@ -320,34 +272,12 @@ void E_VolumeManager::AddVolume(vtkSmartPointer<vtkImageData> vtkImageData){
 void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
     RemoveGroundTruth();
 
-       ///Add Orientation
-    OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
-    orienter->UseImageDirectionOn();
-    orienter->SetInput(itkImageData);
-    orienter->Update();
-
-    ///Threshold image, minimum -1024;
-    itk::ThresholdImageFilter<ImageType>::Pointer clipFilter = itk::ThresholdImageFilter<ImageType>::New();
-    clipFilter->SetInput(orienter->GetOutput());
-    clipFilter->ThresholdBelow(-1024);
-    clipFilter->SetOutsideValue(-1024);
-    clipFilter->Update();
-
-    //Maybe,, have to make new threshold filter here
-    // clipFilter->SetInput(clipFilter->GetOutput());
-    itk::ThresholdImageFilter<ImageType>::Pointer upperclipFilter = itk::ThresholdImageFilter<ImageType>::New();
-    upperclipFilter->SetInput(clipFilter->GetOutput());
-    upperclipFilter->ThresholdAbove(3096);
-    upperclipFilter->SetOutsideValue(0);
-    upperclipFilter->Update();
-
-    // Convert to vtkimagedataclear
-    itkVtkConverter::Pointer conv = itkVtkConverter::New();
-    conv->SetInput(upperclipFilter->GetOutput());
-    conv->Update();
 
 
-    AddVolume(conv->GetOutput());
+    vtkSmartPointer<vtkImageData> imageData = ConvertITKtoVTKImageData(itkImageData);
+
+
+    AddVolume(imageData);
 
 }
 
@@ -360,10 +290,11 @@ void E_VolumeManager::AddSelectedVolume(int patientIdx, int seriesIdx){
     }
 
     ///Get Image Container from dicom group
-    DicomReader::Pointer container = m_patientList[patientIdx]->GetImageContainer(seriesIdx);
+    // DicomReader::Pointer container = m_patientList[patientIdx]->GetImageContainer(seriesIdx);
+    ImageType::Pointer itkImageData = m_patientList[patientIdx]->GetImageData(seriesIdx);
 
     //Add To Renderer
-    AddVolume(container->GetOutput());
+    AddVolume(itkImageData);
 
 
     ///Change Current OTF according to series description
@@ -377,6 +308,10 @@ void E_VolumeManager::AddSelectedVolume(int patientIdx, int seriesIdx){
         m_comboBox->setCurrentIndex(0);
     }
 
+        //Update Current Selected Volume
+    m_currentSelectedParentIdx = patientIdx;
+    m_currentSelectedSeries = seriesIdx;
+
     E_Manager::Mgr()->RedrawAll(true);
 }
 
@@ -384,16 +319,17 @@ void E_VolumeManager::AddSelectedVolume(int patientIdx, int seriesIdx){
 void E_VolumeManager::AddGroundTruth(int parentIdx, int childIdx){
     if(m_volume == NULL) return;
 
+
     ///Set Ground Truth
     ImageType::Pointer itkImage = m_patientList[parentIdx]->GetGroundTruth(childIdx);
 
-    // Convert to vtkimagedata    
-    itkVtkConverter::Pointer conv = itkVtkConverter::New();
-    conv->SetInput(itkImage);
-    conv->Update();
+
+    vtkSmartPointer<vtkImageData> imageData = ConvertITKtoVTKImageData(itkImage);
     
+
     //Update GT Image to the volume
-    m_volume->SetGroundTruth(conv->GetOutput());
+    m_volume->SetGroundTruth(imageData);
+
 
     // Add To Renderer
     if(!m_bGTInRenderer){
@@ -419,4 +355,23 @@ void E_VolumeManager::RemoveGroundTruth(){
     E_Manager::Mgr()->RedrawAll(false);
 
     m_bGTInRenderer = false;
+}
+
+vtkSmartPointer<vtkImageData> E_VolumeManager::ConvertITKtoVTKImageData(ImageType::Pointer itkImage){
+    OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
+    orienter->UseImageDirectionOn();
+    orienter->SetInput(itkImage);
+    orienter->Update();
+    
+    // Convert to vtkimagedataclear
+    itkVtkConverter::Pointer conv = itkVtkConverter::New();
+    conv->SetInput(orienter->GetOutput());
+    conv->Update();
+
+    //should deep copy, or the pointer will be removed here.
+    vtkSmartPointer<vtkImageData> imageData = vtkSmartPointer<vtkImageData>::New();
+    imageData->DeepCopy(conv->GetOutput());
+
+    return imageData;
+
 }

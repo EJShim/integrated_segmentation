@@ -40,10 +40,8 @@ E_Volume::~E_Volume(){
 }
 
 void E_Volume::SetImageData(vtkSmartPointer<vtkImageData> imageData){
-    if(m_imageData == NULL) m_imageData = vtkSmartPointer<vtkImageData>::New();
 
-    m_imageData->DeepCopy(imageData);
-    
+    m_imageData = imageData;
 
     if(m_colorFunction == NULL){
         m_colorFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
@@ -102,15 +100,13 @@ void E_Volume::SetImageData(vtkSmartPointer<vtkImageData> imageData){
 }
 
 void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
-
-    if(m_gt_imageData == NULL){
-        m_gt_imageData = vtkSmartPointer<vtkImageData>::New();
-    }
-    m_gt_imageData->DeepCopy(imageData);
+    m_gt_imageData = imageData;
 
     if(m_gt_volume == NULL){
         m_gt_volume = vtkSmartPointer<vtkVolume>::New();
     }
+
+
 
 
     if(m_gt_colorFunction == NULL){
@@ -205,24 +201,30 @@ void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
 void E_Volume::AssignGroundTruthVolume(int slice, tensorflow::Tensor tensorImage){
     if(m_gt_imageData == NULL) return;
 
-    //Deepcopy - assign - reset ground truth (to avoid VTK bug...)
-    vtkSmartPointer<vtkImageData> imageData = vtkSmartPointer<vtkImageData>::New();
-    imageData->DeepCopy(m_gt_imageData);
-        
-    int* dims = imageData->GetDimensions();
-    int* extent = imageData->GetExtent();
+    // Deepcopy - assign - reset ground truth (to avoid VTK bug...)
 
+    
     //Assign to ground-truth imagedata
-    auto tensorImageMapper = tensorImage.tensor<int,3>();
-    for(int y=0 ; y<dims[1] ; y++){
-        for(int x=0 ; x<dims[0] ; x++){
-            float* pointer = static_cast<float*>(imageData->GetScalarPointer(x+extent[0], y+extent[2], slice));            
-            pointer[0] = tensorImageMapper(0, x, y);            
-        }
-    }
+    
+    // auto tensorImageMapper = tensorImage.tensor<float,3>();
+    // for(int i=0 ; i<tensorImage.dim_size(1) ; i++){
+    //     for(int j=0 ; j<tensorImage.dim_size(2) ; j++){
+    //         std::cout << tensorImageMapper(0, i, j);
+    //     }
+    // }
 
-    m_gt_imageData->DeepCopy(imageData);
+    // for(int y=0 ; y<dims[1] ; y++){
+    //     for(int x=0 ; x<dims[0] ; x++){
+    //         float* pointer = static_cast<float*>(imageData->GetScalarPointer(x+extent[0], y+extent[2], slice));            
+    //         pointer[0] = tensorImageMapper(0, x, y);            
+    //     }
+    // }
+
+    //memcpy(m_gt_imageData->GetScalarPointer(0, slice, 0), tensorImage.tensor<float,3>().data(), tensorImage.TotalBytes());
+
+    //m_gt_imageData->DeepCopy(imageData);
     // SetGroundTruth(imageData);
+
 }
 
 

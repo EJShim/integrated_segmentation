@@ -14,5 +14,10 @@ int main(int argc, char *argv[])
   E_Window mainwindow;
   mainwindow.show();
 
+
+  app.setApplicationName("mandseg");
+  app.setOrganizationName("KIST");
+  app.setOrganizationDomain("ejshim.cafe24.com");
+
   return app.exec();
 }

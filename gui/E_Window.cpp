@@ -9,6 +9,7 @@
 #include <QFileInfo>
 #include <QTimer>
 #include <QThread>
+#include <QSettings>
 #include <math.h>
 
 E_Window::E_Window(QWidget* parent):QMainWindow(parent){
@@ -19,13 +20,6 @@ E_Window::E_Window(QWidget* parent):QMainWindow(parent){
     int width = rec.width();
     m_screenSize = sqrt(pow(height, 2) + pow(width, 2));
 
-
-    // Initialize DIR PATh
-    // QString metapath = QDir::tempPath + QString("/segmentation.tmp");
-    // if(!QDir(metapath).exist()){
-    //     QDir().mkdir(metapath);
-    // }
-    // DIRPATH =  QDir::tempPath();
 
 
     
@@ -48,10 +42,6 @@ E_Window::E_Window(QWidget* parent):QMainWindow(parent){
 E_Window::~E_Window(){
         
 }
-
-
-//Here should import previous path from resouce,, dunno this is the right way..
-QString E_Window::DIRPATH = QDir::homePath();
 
 QToolBar* E_Window::InitToolbar(){
 
@@ -196,21 +186,21 @@ void E_Window::UpdateVolumeTree(){
 
 
 ////////////////////////////////////////////////////////////////////Action SLOTS////////////////////////////////////////////////////////
-void E_Window::ImportVolume(){    
-    
-    QString fileName = QFileDialog::getOpenFileName(this, ("Open File"), DIRPATH , tr("Dicom file(*.dcm) ;; NII file(*.nii)"));
+void E_Window::ImportVolume(){
 
-    if(fileName.length() < 1) return;
-    DIRPATH = QDir(fileName).absolutePath();
+    const QString DEFAULT_DIR_KEY("default_dir");
+    QSettings MySettings;
+    QString fileName = QFileDialog::getOpenFileName(this, ("Open File"),  MySettings.value(DEFAULT_DIR_KEY).toString() , tr("Dicom file(*.dcm) ;; NII file(*.nii)"));
+
+    if(fileName.length() < 1) return;    
+    MySettings.setValue(DEFAULT_DIR_KEY,  QDir(fileName).absolutePath());
     QFileInfo info(fileName);
     QString ext = info.completeSuffix();
 
 
     // Import Volume
     if(ext == "nii"){
-        E_Manager::Mgr()->SetLog("Import *.nii File", NULL);
-        E_Manager::VolumeMgr()->ImportNII(fileName.toLocal8Bit().data());
-
+        E_Manager::Mgr()->SetLog("Import *.nii File, this is deprecated", NULL);
     }
     else if(ext == "dcm"){
         E_Manager::Mgr()->SetLog("Import DICOM(*.dcm) file", NULL);
@@ -226,15 +216,9 @@ void E_Window::ImportVolume(){
 void E_Window::RunSegmentation(){
 
     //Make Blank Ground Truth
-    E_Manager::VolumeMgr()->MakeBlankGroundTruth();    
+    E_Manager::VolumeMgr()->MakeBlankGroundTruth();
+    m_volumeTreeWidget->Update();
 
-    //Update Rendering 3d slice
-    m_checkboxAxl->setCheckState(Qt::Unchecked);
-    m_checkboxCor->setCheckState(Qt::Unchecked);
-    m_checkboxSag->setCheckState(Qt::Checked);
-
-
-    //Set Input Data
 
     //Initialize Segmentation Thread.
     qRegisterMetaType<tensorflow::Tensor>("tensorflow::Tensor"); 
@@ -254,7 +238,7 @@ void E_Window::RunSegmentation(){
 void E_Window::OnSegmentationCalculated(int i, tensorflow::Tensor t){
     
     // Update Animation    
-    E_Manager::VolumeMgr()->GetCurrentVolume()->SetSlice(2, i);
+    E_Manager::VolumeMgr()->GetCurrentVolume()->SetSlice(1, i);
     E_Manager::VolumeMgr()->GetCurrentVolume()->AssignGroundTruthVolume(i, t);
     // E_Manager::VolumeMgr()->UpdateVolume(E_Manager::VolumeMgr()->GetCurrentVolume()->GetGroundTruthVolume());
 

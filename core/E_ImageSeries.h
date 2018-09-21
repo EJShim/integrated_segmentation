@@ -13,7 +13,7 @@ class E_ImageSeries{
     ~E_ImageSeries();
 
     
-    typedef itk::Image<short, 3> ImageType;
+    typedef itk::Image<float, 3> ImageType;
     typedef itk::ImageSeriesReader<ImageType> DicomReader;
     typedef itk::GDCMImageIO ImageIOType;
 
@@ -30,7 +30,7 @@ class E_ImageSeries{
     public:
     int GetNumberOfSlices(){return m_numSlices;}
     DicomReader::Pointer GetImageContainer(){return m_imageContainer;}
-    
+    ImageType::Pointer GetImageData();
     std::string GetSeriesDescription();
 
     //Setters
