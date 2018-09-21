@@ -100,26 +100,3 @@ E_SegmentationThread::ImageType::Pointer E_SegmentationThread::GetSlice(int idx)
     return roiFilter->GetOutput();
 
 }
-
-
-// tensorflow::Tensor E_SegmentationThread::ConvertImageToTensor(vtkSmartPointer<vtkImageData> image){
-
-//     int* dims = image->GetDimensions();  
-//     int* extents = image->GetExtent();
-
-//     // std::cout << extents[0] << ',' << extents[1] << ',' << extents[2] << ',' << extents[3] << ',' << extents[4] << ',' << extents[5] << std::endl;
-
-//     tensorflow::Tensor imageTensor(tensorflow::DT_FLOAT, {1, dims[0], dims[1], dims[2]});
-//     auto tensorMapper = imageTensor.tensor<float,4>();
-
-//     for(int z=0 ; z<dims[2] ; z++){
-//         for(int y=0 ; y<dims[1] ; y++){
-//             for(int x=0 ; x<dims[0] ; x++){
-//                 float* pointer = static_cast<float*>(image->GetScalarPointer(x+extents[0], y+extents[2], z+extents[4]));        
-//                 tensorMapper(0, x, y, z) = pointer[0];
-//             }
-//         }
-//     }
-
-//     return imageTensor;
-// }
