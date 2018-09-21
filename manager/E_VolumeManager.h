@@ -87,8 +87,14 @@ class E_VolumeManager{
     void SetComboBox(QComboBox* comboBox){m_comboBox = comboBox;}
 
     vtkSmartPointer<E_Volume> GetCurrentVolume(){return m_volume;}
+    ImageType::Pointer GetCurrentImageData();
     ///Get Volume List
     std::vector<E_DicomSeries*> &GetVolumeList(){return m_patientList;}
+
+
+    /// Assign Ground Truth to Currnet volume
+
+    void AssignGroundTruth(int idx, tensorflow::Tensor tensor); 
 
     protected:
     vtkSmartPointer<vtkImageData> ConvertITKtoVTKImageData(ImageType::Pointer itkImage);

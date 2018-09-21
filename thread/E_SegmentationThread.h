@@ -2,8 +2,7 @@
 #define E_SEGMENTATIONTHREAD_H
 
 #include <QObject>
-#include <vtkSmartPointer.h>
-#include <vtkImageData.h>
+#include <itkImage.h>
 
 #include "tensorflow/core/public/session.h"
 #include "tensorflow/core/framework/tensor.h"
@@ -13,6 +12,8 @@
 class E_SegmentationThread : public QObject{    
     Q_OBJECT
     public:
+    typedef itk::Image<float, 3> ImageType;
+
     E_SegmentationThread();
     ~E_SegmentationThread();
 
@@ -25,16 +26,16 @@ class E_SegmentationThread : public QObject{
 
     private:
     // tensorflow::Session m_session;
-    vtkSmartPointer<vtkImageData> m_imageData;
-    int* m_dims;
+    ImageType::Pointer m_imageData;
 
     public:
-    void SetImageData(vtkSmartPointer<vtkImageData> data);
+    void SetImageData(ImageType::Pointer data);
     
     
     private:
-    vtkSmartPointer<vtkImageData> GetSingleBatchImage(int slice);
-    tensorflow::Tensor ConvertImageToTensor(vtkSmartPointer<vtkImageData> input);
+    ImageType::Pointer GetSlice(int startIdx);
+    // vtkSmartPointer<vtkImageData> GetSingleBatchImage(int slice);
+    // tensorflow::Tensor ConvertImageToTensor(vtkSmartPointer<vtkImageData> input);
     
 
 

@@ -224,7 +224,7 @@ void E_Window::RunSegmentation(){
     qRegisterMetaType<tensorflow::Tensor>("tensorflow::Tensor"); 
     QThread* thread = new QThread;
     E_SegmentationThread* segmentationWorker = new E_SegmentationThread();
-    segmentationWorker->SetImageData(E_Manager::VolumeMgr()->GetCurrentVolume()->GetImageData());
+    segmentationWorker->SetImageData(E_Manager::VolumeMgr()->GetCurrentImageData());
     segmentationWorker->moveToThread(thread);
     
     connect(thread, SIGNAL(started()), segmentationWorker, SLOT(process()));
@@ -239,7 +239,10 @@ void E_Window::OnSegmentationCalculated(int i, tensorflow::Tensor t){
     
     // Update Animation    
     E_Manager::VolumeMgr()->GetCurrentVolume()->SetSlice(1, i);
-    E_Manager::VolumeMgr()->GetCurrentVolume()->AssignGroundTruthVolume(i, t);
+    E_Manager::VolumeMgr()->AssignGroundTruth(i, t);
+    
+    
+    // E_Manager::VolumeMgr()->GetCurrentVolume()->AssignGroundTruthVolume(i, t);
     // E_Manager::VolumeMgr()->UpdateVolume(E_Manager::VolumeMgr()->GetCurrentVolume()->GetGroundTruthVolume());
 
     E_Manager::Mgr()->RedrawAll(false);

@@ -154,6 +154,34 @@ void E_VolumeManager::MakeBlankGroundTruth(){
     E_Manager::Mgr()->RedrawAll(false);    
 }
 
+void E_VolumeManager::AssignGroundTruth(int idx, tensorflow::Tensor tensor){
+    ImageType::Pointer itkImage = m_patientList[m_currentSelectedParentIdx]->GetImageData(m_currentSelectedSeries);
+
+    ImageType::SizeType size = itkImage->GetLargestPossibleRegion().GetSize();
+    int memoryIdx = int(size[0]) * int(size[1]) * idx;
+    
+    // memcpy(itkImage->GetBufferPointer() + memoryIdx, tensor.tensor_data().data(), tensor.TotalBytes());
+
+    vtkSmartPointer<vtkImageData> imageData = ConvertITKtoVTKImageData(itkImage);
+
+    //Update GT Image to the volume
+    m_volume->SetGroundTruth(imageData);
+
+
+    // Add To Renderer
+    if(!m_bGTInRenderer){
+        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume->GetGroundTruthVolume());
+        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_AXL)->AddViewProp(m_volume->GetGroundTruthImageSlice(0));
+        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_COR)->AddViewProp(m_volume->GetGroundTruthImageSlice(1));
+        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_SAG)->AddViewProp(m_volume->GetGroundTruthImageSlice(2));
+    
+        m_bGTInRenderer = true;
+    }
+    E_Manager::Mgr()->RedrawAll(false);
+
+}
+
+
 void E_VolumeManager::InitializeHistogram(){
  // Get Plot Data
     vtkSmartPointer<vtkImageData> imageData = m_volume->GetImageData();
@@ -374,4 +402,10 @@ vtkSmartPointer<vtkImageData> E_VolumeManager::ConvertITKtoVTKImageData(ImageTyp
 
     return imageData;
 
+}
+
+E_VolumeManager::ImageType::Pointer E_VolumeManager::GetCurrentImageData(){
+    if(m_currentSelectedParentIdx == -1 || m_currentSelectedSeries == -1) return NULL;
+
+    return m_patientList[m_currentSelectedParentIdx]->GetImageData(m_currentSelectedSeries);
 }
