@@ -1,5 +1,7 @@
 #include "E_SegmentationThread.h"
-
+#include <QCoreApplication>
+#include <QDir>
+#include <QThread>
 #include "itkRegionOfInterestImageFilter.h"
 
 
@@ -23,34 +25,43 @@ E_SegmentationThread::~E_SegmentationThread(){
 
 void E_SegmentationThread::process(){
     if(m_imageData == nullptr) return;
-
     qRegisterMetaType<tensorflow::Tensor>("tensorflow::Tensor");
 
+
     //temp - use resource in the future
-    std::string path = "D:/projects/integrated_segmentation/build/bin/temp_saved";
+    std::string path = QCoreApplication::applicationDirPath().toStdString()+"/temp_saved";
     tensorflow::SavedModelBundle bundle;
     //why should I do tensorflow:: here??
-    tensorflow::LoadSavedModel(tensorflow::SessionOptions(), tensorflow::RunOptions(), path, {"ejshim"}, &bundle);
-    tensorflow::Session* session = bundle.session.get();
 
-    ImageType::SizeType size = m_imageData->GetLargestPossibleRegion().GetSize();
-    int slices = int(size[2]);
     
-    //Iterate Over y-axis, it is axial image
+    tensorflow::LoadSavedModel(tensorflow::SessionOptions(), tensorflow::RunOptions(), path, {"ejshim"}, &bundle);
+    tensorflow::Session* session = bundle.session.get();    
+    ImageType::SizeType size = m_imageData->GetLargestPossibleRegion().GetSize();
+    int slices = int(size[2]);    
+
+
+    //Tensor minibatch Container
+    tensorflow::Tensor inputs(tensorflow::DT_FLOAT, {1,5,512,512});
+    
+    
+    //Test For 10 slices,, in for test in cpu it should be from 2 to slices-2
     for(int i=2; i<slices-2 ; i++){
 
+        //Get Input Slice, Convert to Tensor
         ImageType::Pointer slice = GetSlice(i);
-        
-        tensorflow::Tensor singleBatch(tensorflow::DT_FLOAT, {1, 512, 5, 512});   
+
+        //std::copy_n(slice->GetBufferPointer(), inputs.TotalBytes(), inputs.tensor<float,4>().data());
+        memcpy(inputs.tensor<float,4>().data(), slice->GetBufferPointer(),inputs.TotalBytes());         
+
         std::vector<tensorflow::Tensor> outputs;
-        session->Run({{ "input_ejshim", singleBatch }}, {"output_ejshim"}, {}, &outputs);
+        //Forward Inference!
+        session->Run({{ "input_ejshim", inputs }}, {"output_ejshim"}, {}, &outputs);
 
-
-        tensorflow::Tensor testOutput(tensorflow::DT_FLOAT, {512, 512});
-        memcpy(testOutput.tensor<float,2>().data(), slice->GetBufferPointer(),testOutput.TotalBytes());
-        //Emit Signal
-        emit onCalculated(i, testOutput);
+        std::cout << i << std::endl;
+        emit onCalculated(i, outputs[0]);
     }
+
+    //Make Big Result Tensor,, Emit,, that matters??
     emit finished();
 }
 
@@ -67,13 +78,13 @@ E_SegmentationThread::ImageType::Pointer E_SegmentationThread::GetSlice(int idx)
     ImageType::IndexType start;
     start[0] = 0;
     start[1] = 0;
-    start[2] = idx;
+    start[2] = idx-2;
 
     //Current, Extract Single Slice
     ImageType::SizeType size;
     size[0] = inSize[0];
     size[1] = inSize[1];
-    size[2] = 1;
+    size[2] = 5;
 
     ImageType::RegionType desiredRegion;
     desiredRegion.SetSize(size);

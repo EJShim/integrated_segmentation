@@ -34,7 +34,7 @@ class E_ImageSeries{
     std::string GetSeriesDescription();
 
     //Setters
-    void SetGroundTruth(ImageType::Pointer gtdata){m_groundTruth = gtdata;}
+    void SetGroundTruth(ImageType::Pointer gtdata);
     ImageType::Pointer GetGroundTruth(){return m_groundTruth;}
 
     ///Dicom Info by its tag

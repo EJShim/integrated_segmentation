@@ -130,7 +130,6 @@ void E_VolumeManager::MakeBlankGroundTruth(){
 
     ////////////Here, Use ITK
     ImageType::Pointer itkImage = m_patientList[m_currentSelectedParentIdx]->GetImageData(m_currentSelectedSeries);
-
         
     //Deep Copy Current Image
     typedef itk::ImageDuplicator<ImageType> DuplicatorType;
@@ -150,34 +149,22 @@ void E_VolumeManager::MakeBlankGroundTruth(){
     //Add To Renderer
     AddGroundTruth(m_currentSelectedParentIdx, m_currentSelectedSeries);
     
-    std::cout << "ground truth added" << std::endl;
     E_Manager::Mgr()->RedrawAll(false);    
 }
 
 void E_VolumeManager::AssignGroundTruth(int idx, tensorflow::Tensor tensor){
-    ImageType::Pointer itkImage = m_patientList[m_currentSelectedParentIdx]->GetImageData(m_currentSelectedSeries);
 
+    //Get Current Ground Truth Image.
+    ImageType::Pointer itkImage = m_patientList[m_currentSelectedParentIdx]->GetGroundTruth(m_currentSelectedSeries);
+    //Memcopy Tensor information to the gt
     ImageType::SizeType size = itkImage->GetLargestPossibleRegion().GetSize();
     int memoryIdx = int(size[0]) * int(size[1]) * idx;
+    memcpy(itkImage->GetBufferPointer() + memoryIdx, tensor.tensor_data().data(), tensor.TotalBytes());
     
-    // memcpy(itkImage->GetBufferPointer() + memoryIdx, tensor.tensor_data().data(), tensor.TotalBytes());
 
-    vtkSmartPointer<vtkImageData> imageData = ConvertITKtoVTKImageData(itkImage);
-
-    //Update GT Image to the volume
-    m_volume->SetGroundTruth(imageData);
-
-
-    // Add To Renderer
-    if(!m_bGTInRenderer){
-        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume->GetGroundTruthVolume());
-        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_AXL)->AddViewProp(m_volume->GetGroundTruthImageSlice(0));
-        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_COR)->AddViewProp(m_volume->GetGroundTruthImageSlice(1));
-        E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_SAG)->AddViewProp(m_volume->GetGroundTruthImageSlice(2));
-    
-        m_bGTInRenderer = true;
-    }
-    E_Manager::Mgr()->RedrawAll(false);
+    //If I Want to Show Visual Information in Progress!? , but it is very slow (deep copyig vtkimagedata);
+    // vtkSmartPointer<vtkImageData> imageData = ConvertITKtoVTKImageData(itkImage);
+    // m_volume->SetGroundTruth(imageData);    
 
 }
 
@@ -279,8 +266,8 @@ void E_VolumeManager::AddVolume(vtkSmartPointer<vtkImageData> vtkImageData){
       //Make Volume
     if(m_volume == NULL){
         m_volume = vtkSmartPointer<E_Volume>::New();        
-    }
-    m_volume->SetImageData(vtkImageData);
+    }    
+    m_volume->SetImageData(vtkImageData);    
 
     if(!m_bVolumeInRenderer){
         E_Manager::Mgr()->GetRenderer(E_Manager::VIEW_MAIN)->AddViewProp(m_volume);
@@ -301,9 +288,7 @@ void E_VolumeManager::AddVolume(ImageType::Pointer itkImageData){
     RemoveGroundTruth();
 
 
-
-    vtkSmartPointer<vtkImageData> imageData = ConvertITKtoVTKImageData(itkImageData);
-
+    vtkSmartPointer<vtkImageData> imageData = ConvertITKtoVTKImageData(itkImageData);    
 
     AddVolume(imageData);
 
@@ -320,7 +305,7 @@ void E_VolumeManager::AddSelectedVolume(int patientIdx, int seriesIdx){
     ///Get Image Container from dicom group
     // DicomReader::Pointer container = m_patientList[patientIdx]->GetImageContainer(seriesIdx);
     ImageType::Pointer itkImageData = m_patientList[patientIdx]->GetImageData(seriesIdx);
-
+    
     //Add To Renderer
     AddVolume(itkImageData);
 
@@ -350,8 +335,6 @@ void E_VolumeManager::AddGroundTruth(int parentIdx, int childIdx){
 
     ///Set Ground Truth
     ImageType::Pointer itkImage = m_patientList[parentIdx]->GetGroundTruth(childIdx);
-
-
     vtkSmartPointer<vtkImageData> imageData = ConvertITKtoVTKImageData(itkImage);
     
 

@@ -42,7 +42,8 @@ E_Volume::~E_Volume(){
 void E_Volume::SetImageData(vtkSmartPointer<vtkImageData> imageData){
 
     m_imageData = imageData;
-
+    
+    
     if(m_colorFunction == NULL){
         m_colorFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
         m_opacityFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
@@ -62,14 +63,15 @@ void E_Volume::SetImageData(vtkSmartPointer<vtkImageData> imageData){
     }    
     
     if(m_volumeMapper == NULL){
-        m_volumeMapper = vtkSmartPointer<vtkSmartVolumeMapper>::New();
-        m_volumeMapper->SetInputData(m_imageData);        
+        m_volumeMapper = vtkSmartPointer<vtkSmartVolumeMapper>::New();        
         m_volumeMapper->SetBlendModeToMaximumIntensity();        
-
         this->SetMapper(m_volumeMapper);
-    }else{        
-        this->Update();
     }
+    
+    m_volumeMapper->SetInputData(m_imageData);        
+    m_volumeMapper->Update();    
+    
+    
 
     //Image
     if(m_imageProperty == NULL){
@@ -99,14 +101,12 @@ void E_Volume::SetImageData(vtkSmartPointer<vtkImageData> imageData){
     }    
 }
 
-void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
+void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){    
     m_gt_imageData = imageData;
 
     if(m_gt_volume == NULL){
         m_gt_volume = vtkSmartPointer<vtkVolume>::New();
     }
-
-
 
 
     if(m_gt_colorFunction == NULL){
@@ -136,15 +136,15 @@ void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
     }    
     
     if(m_gt_volumeMapper == NULL){
-        m_gt_volumeMapper = vtkSmartPointer<vtkSmartVolumeMapper>::New();
-        m_gt_volumeMapper->SetInputData(m_gt_imageData);
+        m_gt_volumeMapper = vtkSmartPointer<vtkSmartVolumeMapper>::New();    
         // m_gt_volumeMapper->SetRequestedRenderModeToRayCast();
         m_gt_volumeMapper->SetBlendModeToComposite();
 
         m_gt_volume->SetMapper(m_gt_volumeMapper);
-    }else{                
-        // m_gt_volume->Update();
     }
+    m_gt_volumeMapper->SetInputData(m_gt_imageData);
+    m_gt_volumeMapper->Update();    
+    
 
     //Image
     if(m_gt_lut == NULL){
@@ -167,8 +167,7 @@ void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
     if(m_gt_imageSlice[0] == NULL){
         for(int i=0 ; i<3 ; i++){
             m_gt_sliceMapper[i] = vtkSmartPointer<vtkImageSliceMapper>::New();
-            m_gt_sliceMapper[i]->SetOrientation(i);
-            m_gt_sliceMapper[i]->SetInputData(m_gt_imageData);
+            m_gt_sliceMapper[i]->SetOrientation(i);            
 
             m_gt_imageSlice[i] = vtkSmartPointer<vtkImageSlice>::New();
             m_gt_imageSlice[i]->SetProperty(m_gt_imageProperty);
@@ -191,6 +190,13 @@ void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
             
         }
     }
+
+    m_gt_sliceMapper[0]->SetInputData(m_gt_imageData);
+    m_gt_sliceMapper[1]->SetInputData(m_gt_imageData);
+    m_gt_sliceMapper[2]->SetInputData(m_gt_imageData);
+    m_gt_sliceMapper[0]->Update();
+    m_gt_sliceMapper[1]->Update();
+    m_gt_sliceMapper[2]->Update();
 
     for(int i=0 ; i<3 ; i++){
         int sliceNum = m_gt_sliceMapper[i]->GetSliceNumberMaxValue() / 2;

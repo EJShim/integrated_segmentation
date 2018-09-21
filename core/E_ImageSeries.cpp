@@ -19,6 +19,10 @@ E_ImageSeries::~E_ImageSeries(){
 
 }
 
+void E_ImageSeries::SetGroundTruth(ImageType::Pointer gtdata){
+    m_groundTruth = ImageType::New();
+    m_groundTruth = gtdata;
+}
 std::string E_ImageSeries::GetSeriesDescription(){
     //Show series description with slice numbers
     return GetDicomInfo("0008|103e") + " (" + std::to_string( GetNumberOfSlices() ) + ")";
