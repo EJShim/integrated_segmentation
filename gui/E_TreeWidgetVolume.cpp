@@ -193,11 +193,11 @@ void E_TreeWidgetVolume::onImportGroundTruth(){
 
     // Import Volume
     if(ext == "nii"){
-        E_Manager::Mgr()->SetLog("Import *.nii Ground Truth File of ", std::to_string(m_currentParentIdx), std::to_string(m_currentChildIdx), NULL);
+        E_Manager::Mgr()->SetLog("Import *.nii Ground Truth File of ", std::to_string(m_currentParentIdx).c_str(), std::to_string(m_currentChildIdx).c_str(), NULL);
 
     }
     else if(ext == "dcm"){
-        E_Manager::Mgr()->SetLog("Import DICOM(*.dcm) Ground Truth File of ",  std::to_string(m_currentParentIdx), std::to_string(m_currentChildIdx), NULL);
+        E_Manager::Mgr()->SetLog("Import DICOM(*.dcm) Ground Truth File of ",  std::to_string(m_currentParentIdx).c_str(), std::to_string(m_currentChildIdx).c_str(), NULL);
         QDir directoryPath = info.dir();
         E_Manager::VolumeMgr()->ImportGroundTruth(directoryPath.absolutePath().toLocal8Bit().data(), m_currentParentIdx, m_currentChildIdx);
     }
