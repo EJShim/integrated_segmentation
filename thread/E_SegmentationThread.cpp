@@ -56,8 +56,7 @@ void E_SegmentationThread::process(){
         std::vector<tensorflow::Tensor> outputs;
         //Forward Inference!
         session->Run({{ "input_ejshim", inputs }}, {"output_ejshim"}, {}, &outputs);
-
-        std::cout << i << std::endl;
+        
         emit onCalculated(i, outputs[0]);
     }
 
