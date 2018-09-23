@@ -57,7 +57,7 @@ void E_SegmentationThread::process(){
     
     
     //Test For 10 slices,, in for test in cpu it should be from 2 to slices-2
-    for(int i=30; i<55 ; i++){
+    for(int i=2; i<slices-2 ; i++){
 
         //Get Input Slice, Convert to Tensor
         ImageType::Pointer slice = GetSlice(i);
@@ -73,7 +73,9 @@ void E_SegmentationThread::process(){
         AssignGroundTruth(i, outputs[0]);
         
         //Emit Current Progression
-        emit onCalculated(i);
+
+        float progress = i*100.0 / (slices-5);        
+        emit onCalculated(progress);
     }
 
     //Make Big Result Tensor,, Emit,, that matters??

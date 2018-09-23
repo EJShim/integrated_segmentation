@@ -11,6 +11,7 @@
 #include <QSettings>
 #include <QThread>
 #include <math.h>
+#include <iomanip>
 
 E_Window::E_Window(QWidget* parent):QMainWindow(parent){
 
@@ -216,7 +217,7 @@ void E_Window::RunSegmentation(){
 
         //Initialize Thread        
         m_segmentationWorker = new E_SegmentationThread();
-        connect(m_segmentationWorker, SIGNAL(onCalculated(int)), this, SLOT(OnSegmentationCalculated(int)));
+        connect(m_segmentationWorker, SIGNAL(onCalculated(float)), this, SLOT(OnSegmentationCalculated(float)));
         connect(m_segmentationWorker, SIGNAL(finished()), this, SLOT(OnFinishedSegmentation()));
         
     }
@@ -231,11 +232,14 @@ void E_Window::RunSegmentation(){
     thread->start();
 }
 
-void E_Window::OnSegmentationCalculated(int i){
+void E_Window::OnSegmentationCalculated(float i){
     
     // Progress
     E_Manager::VolumeMgr()->GetCurrentVolume()->SetSlice(1, i);
-    E_Manager::Mgr()->SetLog("processing segmentation ", std::to_string(i).c_str() , NULL);
+
+    std::ostringstream out;
+    out << std::setprecision(2) << std::to_string(i);
+    E_Manager::Mgr()->SetLog("segmentation ", out.str().c_str(), "% done" , NULL);
 
     E_Manager::Mgr()->RedrawAll(false);
     
