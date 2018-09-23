@@ -9,7 +9,6 @@
 #include <QListWidget>
 #include <QTreeWidget>
 #include <E_TreeWidgetVolume.h>
-#include "tensorflow/core/framework/tensor.h"
 #include "E_Manager.h"
 #include "E_SegmentationThread.h"
 #include "E_HistogramWidget.h"
@@ -60,7 +59,7 @@ class E_Window : public QMainWindow{
     QGroupBox* Init3DSliceGroup();
     void CreateDockWindows();
 
-    E_SegmentationThread* m_segmentationThread;
+    E_SegmentationThread* m_segmentationWorker;
 
 
     public:
@@ -75,7 +74,7 @@ class E_Window : public QMainWindow{
 
     void ImportVolume();
     void RunSegmentation();
-    void OnSegmentationCalculated(int i, tensorflow::Tensor);
+    void OnSegmentationCalculated(int i);
     void OnFinishedSegmentation();
 
     void ToggleAxlSlice(int state);

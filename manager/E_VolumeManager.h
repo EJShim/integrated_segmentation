@@ -88,6 +88,7 @@ class E_VolumeManager{
 
     vtkSmartPointer<E_Volume> GetCurrentVolume(){return m_volume;}
     ImageType::Pointer GetCurrentImageData();
+    ImageType::Pointer GetCurrentGroundTruthData();
     ///Get Volume List
     std::vector<E_DicomSeries*> &GetVolumeList(){return m_patientList;}
 

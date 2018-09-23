@@ -155,7 +155,7 @@ void E_VolumeManager::MakeBlankGroundTruth(){
 void E_VolumeManager::AssignGroundTruth(int idx, tensorflow::Tensor tensor){
 
     //Get Current Ground Truth Image.
-    ImageType::Pointer itkImage = m_patientList[m_currentSelectedParentIdx]->GetGroundTruth(m_currentSelectedSeries);
+    ImageType::Pointer itkImage = GetCurrentGroundTruthData();
     //Memcopy Tensor information to the gt
     ImageType::SizeType size = itkImage->GetLargestPossibleRegion().GetSize();
     int memoryIdx = int(size[0]) * int(size[1]) * idx;
@@ -391,4 +391,10 @@ E_VolumeManager::ImageType::Pointer E_VolumeManager::GetCurrentImageData(){
     if(m_currentSelectedParentIdx == -1 || m_currentSelectedSeries == -1) return NULL;
 
     return m_patientList[m_currentSelectedParentIdx]->GetImageData(m_currentSelectedSeries);
+}
+
+E_VolumeManager::ImageType::Pointer E_VolumeManager::GetCurrentGroundTruthData(){
+    if(m_currentSelectedParentIdx == -1 || m_currentSelectedSeries == -1) return NULL;
+
+    return m_patientList[m_currentSelectedParentIdx]->GetGroundTruth(m_currentSelectedSeries);
 }

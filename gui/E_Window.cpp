@@ -8,8 +8,8 @@
 #include <QFileDialog>
 #include <QFileInfo>
 #include <QTimer>
-#include <QThread>
 #include <QSettings>
+#include <QThread>
 #include <math.h>
 
 E_Window::E_Window(QWidget* parent):QMainWindow(parent){
@@ -20,11 +20,6 @@ E_Window::E_Window(QWidget* parent):QMainWindow(parent){
     int width = rec.width();
     m_screenSize = sqrt(pow(height, 2) + pow(width, 2));
 
-
-
-    
-
-
     // Initialize toolbar
     this->addToolBar(Qt::TopToolBarArea, this->InitToolbar());
     
@@ -34,7 +29,7 @@ E_Window::E_Window(QWidget* parent):QMainWindow(parent){
     // Add Dock widget
     this->CreateDockWindows();
 
-    m_segmentationThread = NULL;
+    m_segmentationWorker = NULL;
 
     this->showMaximized();
 }
@@ -150,10 +145,6 @@ void E_Window::CreateDockWindows(){
 
 
 
-
-
-
-
     /////// Histogram Widget
     m_histDocker = new QDockWidget("histogram", this);
     m_histDocker->setAllowedAreas(Qt::RightDockWidgetArea | Qt::LeftDockWidgetArea);
@@ -221,36 +212,37 @@ void E_Window::RunSegmentation(){
 
 
     //Initialize Segmentation Thread.
-    qRegisterMetaType<tensorflow::Tensor>("tensorflow::Tensor"); 
+    if(m_segmentationWorker == NULL){
+
+        //Initialize Thread        
+        m_segmentationWorker = new E_SegmentationThread();
+        connect(m_segmentationWorker, SIGNAL(onCalculated(int)), this, SLOT(OnSegmentationCalculated(int)));
+        connect(m_segmentationWorker, SIGNAL(finished()), this, SLOT(OnFinishedSegmentation()));
+        
+    }
+    //Move To Thread
     QThread* thread = new QThread;
-    E_SegmentationThread* segmentationWorker = new E_SegmentationThread();
-    segmentationWorker->SetImageData(E_Manager::VolumeMgr()->GetCurrentImageData());
-    segmentationWorker->moveToThread(thread);
+    connect(thread, SIGNAL(started()), m_segmentationWorker, SLOT(process()));
+    m_segmentationWorker->moveToThread(thread);
     
-    connect(thread, SIGNAL(started()), segmentationWorker, SLOT(process()));
-    connect(segmentationWorker, SIGNAL(onCalculated(int, tensorflow::Tensor)), this, SLOT(OnSegmentationCalculated(int, tensorflow::Tensor)));
-    connect(segmentationWorker, SIGNAL(finished()), this, SLOT(OnFinishedSegmentation()));
-    
-    
+
+
+    ///Set Patient Index here
     thread->start();
 }
 
-void E_Window::OnSegmentationCalculated(int i, tensorflow::Tensor t){
+void E_Window::OnSegmentationCalculated(int i){
     
-    // Update Animation    
+    // Progress
     E_Manager::VolumeMgr()->GetCurrentVolume()->SetSlice(1, i);
-    E_Manager::VolumeMgr()->AssignGroundTruth(i, t);
-    
-    
-    // E_Manager::VolumeMgr()->GetCurrentVolume()->AssignGroundTruthVolume(i, t);
-    // E_Manager::VolumeMgr()->UpdateVolume(E_Manager::VolumeMgr()->GetCurrentVolume()->GetGroundTruthVolume());
+    E_Manager::Mgr()->SetLog("processing segmentation ", std::to_string(i).c_str() , NULL);
 
     E_Manager::Mgr()->RedrawAll(false);
     
 }
 
 void E_Window::OnFinishedSegmentation(){
-    std::cout << "segmentation finished" << std::endl;    
+    E_Manager::Mgr()->SetLog("Segmentation Finihsed! ", NULL);
 }
 
 void E_Window::ToggleAxlSlice(int state){

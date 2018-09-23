@@ -1,9 +1,9 @@
 #include "E_SegmentationThread.h"
+#include "E_Manager.h"
 #include <QCoreApplication>
 #include <QDir>
 #include <QThread>
 #include "itkRegionOfInterestImageFilter.h"
-
 
 #include "tensorflow/cc/client/client_session.h"
 #include "tensorflow/cc/ops/standard_ops.h"
@@ -14,7 +14,11 @@
 
 E_SegmentationThread::E_SegmentationThread(){
 
-    m_imageData = NULL;
+    Initialize();
+
+    //Initialize Session Container
+    std::string path = QCoreApplication::applicationDirPath().toStdString()+"/temp_saved";    
+    tensorflow::LoadSavedModel(tensorflow::SessionOptions(), tensorflow::RunOptions(), path, {"ejshim"}, &m_sessionContainer);
 }
 
 E_SegmentationThread::~E_SegmentationThread(){
@@ -22,45 +26,59 @@ E_SegmentationThread::~E_SegmentationThread(){
 }
 
 
+void E_SegmentationThread::Initialize(){
+    m_imageData = NULL;
+
+    m_patientIdx = -1;
+    m_sereisIdx = -1;
+}
+
+void E_SegmentationThread::SetTargetData(int patientIdx, int seriesIdx){
+    m_patientIdx = patientIdx;
+    m_sereisIdx = seriesIdx;
+}
+
+
 
 void E_SegmentationThread::process(){
-    if(m_imageData == nullptr) return;
-    qRegisterMetaType<tensorflow::Tensor>("tensorflow::Tensor");
-
-
-    //temp - use resource in the future
-    std::string path = QCoreApplication::applicationDirPath().toStdString()+"/temp_saved";
-    tensorflow::SavedModelBundle bundle;
-    //why should I do tensorflow:: here??
-
     
-    tensorflow::LoadSavedModel(tensorflow::SessionOptions(), tensorflow::RunOptions(), path, {"ejshim"}, &bundle);
-    tensorflow::Session* session = bundle.session.get();    
+    // if(m_patientIdx == -1 || m_sereisIdx == -1) return;
+    //Get Current Image Data
+    m_imageData = E_Manager::VolumeMgr()->GetCurrentImageData();
     ImageType::SizeType size = m_imageData->GetLargestPossibleRegion().GetSize();
     int slices = int(size[2]);    
 
+
+    //Get Session
+    tensorflow::Session* session = m_sessionContainer.session.get();    
 
     //Tensor minibatch Container
     tensorflow::Tensor inputs(tensorflow::DT_FLOAT, {1,5,512,512});
     
     
     //Test For 10 slices,, in for test in cpu it should be from 2 to slices-2
-    for(int i=2; i<slices-2 ; i++){
+    for(int i=30; i<55 ; i++){
 
         //Get Input Slice, Convert to Tensor
         ImageType::Pointer slice = GetSlice(i);
 
-        //std::copy_n(slice->GetBufferPointer(), inputs.TotalBytes(), inputs.tensor<float,4>().data());
+        //This Part, just memory allocation(?) could be better,,
         memcpy(inputs.tensor<float,4>().data(), slice->GetBufferPointer(),inputs.TotalBytes());         
 
-        std::vector<tensorflow::Tensor> outputs;
         //Forward Inference!
+        std::vector<tensorflow::Tensor> outputs;
         session->Run({{ "input_ejshim", inputs }}, {"output_ejshim"}, {}, &outputs);
+
+        //Assign Ground Truth, this part, do memcpy
+        AssignGroundTruth(i, outputs[0]);
         
-        emit onCalculated(i, outputs[0]);
+        //Emit Current Progression
+        emit onCalculated(i);
     }
 
     //Make Big Result Tensor,, Emit,, that matters??
+
+    Initialize();
     emit finished();
 }
 
@@ -97,5 +115,13 @@ E_SegmentationThread::ImageType::Pointer E_SegmentationThread::GetSlice(int idx)
     roiFilter->Update();
 
     return roiFilter->GetOutput();
+}
 
+void E_SegmentationThread::AssignGroundTruth(int idx, tensorflow::Tensor tensor){
+    //Get Current Ground Truth Image.
+    ImageType::Pointer itkImage = E_Manager::VolumeMgr()->GetCurrentGroundTruthData();
+    //Memcopy Tensor information to the gt
+    ImageType::SizeType size = itkImage->GetLargestPossibleRegion().GetSize();
+    int memoryIdx = int(size[0]) * int(size[1]) * idx;
+    memcpy(itkImage->GetBufferPointer() + memoryIdx, tensor.tensor_data().data(), tensor.TotalBytes());
 }
