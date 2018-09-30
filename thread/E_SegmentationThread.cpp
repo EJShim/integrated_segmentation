@@ -64,7 +64,7 @@ void E_SegmentationThread::process(){
 
         //This Part, just memory allocation(?) could be better,,
         memcpy(inputs.tensor<float,4>().data(), slice->GetBufferPointer(),inputs.TotalBytes());         
-
+    
         //Forward Inference!
         std::vector<tensorflow::Tensor> outputs;
         session->Run({{ "input_ejshim", inputs }}, {"output_ejshim"}, {}, &outputs);

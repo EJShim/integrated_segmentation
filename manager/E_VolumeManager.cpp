@@ -157,22 +157,31 @@ void E_VolumeManager::UpdateGroundTruth(int idx){
     //Get Current Ground Truth Image.
     ImageType::Pointer itkImage = GetCurrentGroundTruthData();
     ImageType::SizeType size = itkImage->GetLargestPossibleRegion().GetSize();
-    
+
     
 
     //Get Current VTK ImageData
     vtkSmartPointer<vtkImageData> vtkImage = m_volume->GetGroundTruth();
-    int* dims = vtkImage->GetDimensions();
+    // vtkImage->AllocateScalars(VTK_FLOAT,1);
+    // int* dims = vtkImage->GetDimensions();
 
-    //Fill vtk imagedata
-    for (int z = 0; z < dims[2]; z++){
-        for (int y = idx; y < idx+1; y++){
-            for (int x = 0; x < dims[0]; x++){
-            float* pixel = static_cast<float*>(vtkImage->GetScalarPointer(x,y,z));
-            pixel[0] = 2.0;
-            }
-        }
-    }
+    // //Fill vtk imagedata
+    // for (int z = 0; z < dims[2]; z++){
+    //     for (int y = idx; y < idx+1; y++){
+    //         for (int x = 0; x < dims[0]; x++){
+    //         float* pixel = static_cast<float*>(vtkImage->GetScalarPointer(x,y,z));
+    //         pixel[0] = 1.0;
+    //         }
+    //     }
+    // }
+
+    
+    //Memcopy Tensor information to the gt
+    
+    int memoryIdx = int(size[0]) * int(size[1]) * idx;
+    memcpy(static_cast<float*>(vtkImage->GetScalarPointer(0,idx,0)), itkImage->GetBufferPointer()+memoryIdx, 512*512*sizeof(float));
+
+    
 
     m_volume->Update();
     // std::cout << size <<  "|| " << dims[0] << "," << dims[1] << "," << dims[2] << std::endl;

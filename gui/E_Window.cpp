@@ -235,7 +235,7 @@ void E_Window::RunSegmentation(){
 void E_Window::OnSegmentationCalculated(float i){
     
     // Progress
-    // E_Manager::VolumeMgr()->UpdateGroundTruth(i);
+    E_Manager::VolumeMgr()->UpdateGroundTruth(i);
     E_Manager::VolumeMgr()->GetCurrentVolume()->SetSlice(1, i);
 
     std::ostringstream out;
