@@ -147,6 +147,7 @@ void E_Manager::Redraw(int idx, bool reset){
     double* focal = m_renderer[VIEW_SAG]->GetActiveCamera()->GetFocalPoint();
 
     // this->m_renderer[idx]->Render();
+    this->m_renderer[idx]->Render();
     this->m_renderer[idx]->GetRenderWindow()->Render();
 }
 

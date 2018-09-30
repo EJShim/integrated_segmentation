@@ -95,7 +95,7 @@ class E_VolumeManager{
 
     /// Assign Ground Truth to Currnet volume
 
-    void AssignGroundTruth(int idx, tensorflow::Tensor tensor); 
+    void UpdateGroundTruth(int idx);
 
     protected:
     vtkSmartPointer<vtkImageData> ConvertITKtoVTKImageData(ImageType::Pointer itkImage);

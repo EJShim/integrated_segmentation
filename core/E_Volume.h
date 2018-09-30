@@ -61,7 +61,10 @@ class E_Volume : public vtkVolume{
     public:    
     void SetImageData(vtkSmartPointer<vtkImageData>);
     void SetGroundTruth(vtkSmartPointer<vtkImageData>);
+    vtkSmartPointer<vtkImageData> GetGroundTruth(){return m_gt_imageData;}
     void AssignGroundTruthVolume(int slice, tensorflow::Tensor tensorImage);
+
+    void Update();
 
 
     ///Change Transfer Function
@@ -75,6 +78,8 @@ class E_Volume : public vtkVolume{
     void SetSlice(int idx, int sliceNum);
     void ForwardSlice(int idx);
     void BackwardSlice(int idx);
+
+
 
     //Get Color and Opacity Function
     vtkSmartPointer<vtkColorTransferFunction> GetColorTransferFunction(){ return m_colorFunction;}

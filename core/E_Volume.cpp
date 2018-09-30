@@ -111,18 +111,18 @@ void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
 
     if(m_gt_colorFunction == NULL){
         m_gt_colorFunction = vtkSmartPointer<vtkColorTransferFunction>::New();
+        m_gt_colorFunction->AddRGBPoint(0, 0.0, 0.0, 1.0);
+        m_gt_colorFunction->AddRGBPoint(1, 0.0, 1.0, 0.0);
+        m_gt_colorFunction->AddRGBPoint(2, 1.0, 0.0, 0.0);
     }
-    m_gt_colorFunction->AddRGBPoint(0, 0.0, 0.0, 0.0);
-    m_gt_colorFunction->AddRGBPoint(1, 0.0, 1.0, 0.0);
-    m_gt_colorFunction->AddRGBPoint(2, 1.0, 0.0, 0.0);
+    
 
     if(m_gt_opacityFunction == NULL){
         m_gt_opacityFunction = vtkSmartPointer<vtkPiecewiseFunction>::New();
+        m_gt_opacityFunction->AddPoint(0, 0.0);
+        m_gt_opacityFunction->AddPoint(1, 1.0);
+        m_gt_opacityFunction->AddPoint(2, 1.0);
     }
-    m_gt_opacityFunction->AddPoint(0, 0.0);
-    m_gt_opacityFunction->AddPoint(1, 1.0);
-    m_gt_opacityFunction->AddPoint(2, 1.0);
-
 
 
     if(m_gt_volumeProperty == NULL){
@@ -136,15 +136,10 @@ void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
     }    
     
     if(m_gt_volumeMapper == NULL){
-        m_gt_volumeMapper = vtkSmartPointer<vtkSmartVolumeMapper>::New();    
-        // m_gt_volumeMapper->SetRequestedRenderModeToRayCast();
+        m_gt_volumeMapper = vtkSmartPointer<vtkSmartVolumeMapper>::New();        
         m_gt_volumeMapper->SetBlendModeToComposite();
-
         m_gt_volume->SetMapper(m_gt_volumeMapper);
     }
-    m_gt_volumeMapper->SetInputData(m_gt_imageData);
-    m_gt_volumeMapper->Update();    
-    
 
     //Image
     if(m_gt_lut == NULL){
@@ -191,17 +186,38 @@ void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
         }
     }
 
-    m_gt_sliceMapper[0]->SetInputData(m_gt_imageData);
-    m_gt_sliceMapper[1]->SetInputData(m_gt_imageData);
-    m_gt_sliceMapper[2]->SetInputData(m_gt_imageData);
-    m_gt_sliceMapper[0]->Update();
-    m_gt_sliceMapper[1]->Update();
-    m_gt_sliceMapper[2]->Update();
-
     for(int i=0 ; i<3 ; i++){
         int sliceNum = m_gt_sliceMapper[i]->GetSliceNumberMaxValue() / 2;
         m_gt_sliceMapper[i]->SetSliceNumber(sliceNum);
-    }    
+    }
+
+    m_gt_volumeMapper->SetInputData(m_gt_imageData);
+    m_gt_volumeMapper->Update();
+
+    m_gt_sliceMapper[0]->SetInputData(m_gt_imageData);
+    m_gt_sliceMapper[0]->Update();
+
+    m_gt_sliceMapper[1]->SetInputData(m_gt_imageData);
+    m_gt_sliceMapper[1]->Update();
+
+    m_gt_sliceMapper[2]->SetInputData(m_gt_imageData);
+    m_gt_sliceMapper[2]->Update();
+
+    
+}
+
+void E_Volume::Update(){
+
+    if(m_gt_volumeMapper == NULL) return;
+
+    m_gt_volume->Update();
+
+    if(m_gt_sliceMapper[0] == NULL) return;
+    
+    m_gt_imageSlice[0]->Update();
+    m_gt_imageSlice[1]->Update();
+    m_gt_imageSlice[2]->Update();
+
 }
 
 void E_Volume::AssignGroundTruthVolume(int slice, tensorflow::Tensor tensorImage){

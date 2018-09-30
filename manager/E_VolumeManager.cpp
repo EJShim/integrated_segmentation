@@ -152,19 +152,31 @@ void E_VolumeManager::MakeBlankGroundTruth(){
     E_Manager::Mgr()->RedrawAll(false);    
 }
 
-void E_VolumeManager::AssignGroundTruth(int idx, tensorflow::Tensor tensor){
+void E_VolumeManager::UpdateGroundTruth(int idx){
 
     //Get Current Ground Truth Image.
     ImageType::Pointer itkImage = GetCurrentGroundTruthData();
-    //Memcopy Tensor information to the gt
     ImageType::SizeType size = itkImage->GetLargestPossibleRegion().GetSize();
-    int memoryIdx = int(size[0]) * int(size[1]) * idx;
-    memcpy(itkImage->GetBufferPointer() + memoryIdx, tensor.tensor_data().data(), tensor.TotalBytes());
+    
     
 
-    //If I Want to Show Visual Information in Progress!? , but it is very slow (deep copyig vtkimagedata);
-    // vtkSmartPointer<vtkImageData> imageData = ConvertITKtoVTKImageData(itkImage);
-    // m_volume->SetGroundTruth(imageData);    
+    //Get Current VTK ImageData
+    vtkSmartPointer<vtkImageData> vtkImage = m_volume->GetGroundTruth();
+    int* dims = vtkImage->GetDimensions();
+
+    //Fill vtk imagedata
+    for (int z = 0; z < dims[2]; z++){
+        for (int y = idx; y < idx+1; y++){
+            for (int x = 0; x < dims[0]; x++){
+            float* pixel = static_cast<float*>(vtkImage->GetScalarPointer(x,y,z));
+            pixel[0] = 2.0;
+            }
+        }
+    }
+
+    m_volume->Update();
+    // std::cout << size <<  "|| " << dims[0] << "," << dims[1] << "," << dims[2] << std::endl;
+    
 
 }
 
