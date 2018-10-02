@@ -183,7 +183,7 @@ void E_VolumeManager::UpdateGroundTruth(int idx){
 
     
 
-    m_volume->Update();
+    // m_volume->Update();
     // std::cout << size <<  "|| " << dims[0] << "," << dims[1] << "," << dims[2] << std::endl;
     
 
@@ -323,6 +323,11 @@ void E_VolumeManager::AddSelectedVolume(int patientIdx, int seriesIdx){
         return;
     }
 
+    
+    //Update Current Selected Volume
+    m_currentSelectedParentIdx = patientIdx;
+    m_currentSelectedSeries = seriesIdx;
+
     ///Get Image Container from dicom group
     // DicomReader::Pointer container = m_patientList[patientIdx]->GetImageContainer(seriesIdx);
     ImageType::Pointer itkImageData = m_patientList[patientIdx]->GetImageData(seriesIdx);
@@ -342,9 +347,6 @@ void E_VolumeManager::AddSelectedVolume(int patientIdx, int seriesIdx){
         m_comboBox->setCurrentIndex(0);
     }
 
-        //Update Current Selected Volume
-    m_currentSelectedParentIdx = patientIdx;
-    m_currentSelectedSeries = seriesIdx;
 
     E_Manager::Mgr()->RedrawAll(true);
 }

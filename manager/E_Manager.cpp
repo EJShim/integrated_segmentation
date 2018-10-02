@@ -169,6 +169,10 @@ void E_Manager::SetLogWidget(QDockWidget* widgetDocker){
     widgetDocker->setWidget(m_logWidget);
 }
 
+void E_Manager::PopLog(){
+    m_logWidget->takeItem( m_logWidget->count()-1 );
+
+}
 void E_Manager::SetLog(const char *arg, ...){
     va_list arguments;
 
@@ -179,7 +183,10 @@ void E_Manager::SetLog(const char *arg, ...){
     }
     
     m_logWidget->addItem(QString(logstring.c_str()));
-    
+    if(m_logWidget->count() > 100){
+        m_logWidget->takeItem(0);
+    }
+
     m_logWidget->verticalScrollBar()->setValue( m_logWidget->verticalScrollBar()->maximum());
 
 

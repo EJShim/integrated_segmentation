@@ -51,6 +51,7 @@ class E_Manager{
     ///Set Log
     void SetLogWidget(QDockWidget* widgetDocker);
     void SetLog(const char *arg, ...);
+    void PopLog();
 
 
 

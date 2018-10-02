@@ -69,7 +69,7 @@ void E_Volume::SetImageData(vtkSmartPointer<vtkImageData> imageData){
     }
     
     m_volumeMapper->SetInputData(m_imageData);        
-    m_volumeMapper->Update();    
+    Update();    
     
     
 
@@ -87,7 +87,7 @@ void E_Volume::SetImageData(vtkSmartPointer<vtkImageData> imageData){
         for(int i=0 ; i<3 ; i++){
             m_sliceMapper[i] = vtkSmartPointer<vtkImageSliceMapper>::New();
             m_sliceMapper[i]->SetOrientation(i);
-            m_sliceMapper[i]->SetInputData(m_imageData);
+            // m_sliceMapper[i]->SetInputData(m_imageData);
 
             m_imageSlice[i] = vtkSmartPointer<vtkImageSlice>::New();
             m_imageSlice[i]->SetProperty(m_imageProperty);
@@ -96,9 +96,11 @@ void E_Volume::SetImageData(vtkSmartPointer<vtkImageData> imageData){
     }
 
     for(int i=0 ; i<3 ; i++){
+        m_sliceMapper[i]->SetInputData(m_imageData);
+        m_imageSlice[i]->Update();
         int sliceNum = m_sliceMapper[i]->GetSliceNumberMaxValue() / 2;
         m_sliceMapper[i]->SetSliceNumber(sliceNum);
-    }    
+    }
 }
 
 void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){    
@@ -167,22 +169,7 @@ void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
             m_gt_imageSlice[i] = vtkSmartPointer<vtkImageSlice>::New();
             m_gt_imageSlice[i]->SetProperty(m_gt_imageProperty);
             m_gt_imageSlice[i]->SetMapper(m_gt_sliceMapper[i]);
-            
-            double* position = m_gt_imageSlice[i]->GetPosition();
-            switch(i){
-                case AXL:
-                m_gt_imageSlice[i]->SetPosition(position[0]-10, position[1], position[2]);
-                break;
-                case COR:
-                m_gt_imageSlice[i]->SetPosition(position[0], position[1]+10, position[2]);
-                break;
-                case SAG:
-                break;
-                m_gt_imageSlice[i]->SetPosition(position[0], position[1], position[2]-10);
-                default:
-                break;
-            }
-            
+    
         }
     }
 
@@ -192,33 +179,34 @@ void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
     }
     
     m_gt_volumeMapper->SetInputData(m_gt_imageData);
-    m_gt_volumeMapper->Update();
-
-    m_gt_sliceMapper[0]->SetInputData(m_gt_imageData);
-    m_gt_sliceMapper[0]->Update();
-
-    m_gt_sliceMapper[1]->SetInputData(m_gt_imageData);
-    m_gt_sliceMapper[1]->Update();
-
-    m_gt_sliceMapper[2]->SetInputData(m_gt_imageData);
-    m_gt_sliceMapper[2]->Update();
-
-    
-}
-
-void E_Volume::Update(){
-
-    if(m_gt_volumeMapper == NULL) return;
-
     m_gt_volume->Update();
 
-    if(m_gt_sliceMapper[0] == NULL) return;
-    
+    m_gt_sliceMapper[0]->SetInputData(m_gt_imageData);
     m_gt_imageSlice[0]->Update();
+
+    m_gt_sliceMapper[1]->SetInputData(m_gt_imageData);
     m_gt_imageSlice[1]->Update();
+
+    m_gt_sliceMapper[2]->SetInputData(m_gt_imageData);
     m_gt_imageSlice[2]->Update();
 
+    
 }
+
+// void E_Volume::Update(){
+    
+
+//     if(m_gt_volumeMapper == NULL) return;
+
+//     m_gt_volume->Update();
+
+//     if(m_gt_sliceMapper[0] == NULL) return;
+    
+//     m_gt_imageSlice[0]->Update();
+//     m_gt_imageSlice[1]->Update();
+//     m_gt_imageSlice[2]->Update();
+
+// }
 
 void E_Volume::AssignGroundTruthVolume(int slice, tensorflow::Tensor tensorImage){
     if(m_gt_imageData == NULL) return;

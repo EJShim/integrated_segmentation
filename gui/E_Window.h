@@ -58,6 +58,7 @@ class E_Window : public QMainWindow{
     QWidget* InitCentralWidget();
     QGroupBox* Init3DSliceGroup();
     void CreateDockWindows();
+    void InitializeSegmentationWorker();
 
     E_SegmentationThread* m_segmentationWorker;
 

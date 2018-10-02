@@ -74,7 +74,7 @@ void E_SegmentationThread::process(){
         
         //Emit Current Progression
 
-        float progress = i*100.0 / (slices-5);        
+        float progress = (i-2)*100.0 / (slices-5);        
         emit onCalculated(progress);
     }
 

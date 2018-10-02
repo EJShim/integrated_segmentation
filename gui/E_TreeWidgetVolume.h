@@ -21,6 +21,9 @@ class E_TreeWidgetVolume : public QTreeWidget{
 
 
     public:
+
+    void SetCurrentItemState(bool state);
+    
     void Update();
 
 

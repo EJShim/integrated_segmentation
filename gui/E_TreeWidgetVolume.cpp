@@ -50,6 +50,20 @@ void E_TreeWidgetVolume::Initialize(){
     connect(this, SIGNAL(customContextMenuRequested(const QPoint &)), this, SLOT(onContextMenu(const QPoint &)));
 }
 
+void E_TreeWidgetVolume::SetCurrentItemState(bool state){
+    if(m_currentParentIdx == -1 || m_currentChildIdx == -1) return;
+
+        
+    QTreeWidgetItem* item = topLevelItem(m_currentParentIdx)->child(m_currentChildIdx);
+    
+
+    if(state)
+        item->setCheckState(2, Qt::Checked);
+    else
+        item->setCheckState(2, Qt::Unchecked);
+    
+}
+
 void E_TreeWidgetVolume::Update(){
       //Clear
     clear();

@@ -15,6 +15,10 @@
 
 E_Window::E_Window(QWidget* parent):QMainWindow(parent){
 
+    //Initialize Woreker
+    InitializeSegmentationWorker();
+
+
     //initialize screen size
     QRect rec = QApplication::desktop()->screenGeometry();
     int height = rec.height();
@@ -30,13 +34,21 @@ E_Window::E_Window(QWidget* parent):QMainWindow(parent){
     // Add Dock widget
     this->CreateDockWindows();
 
-    m_segmentationWorker = NULL;
-
     this->showMaximized();
+
+
 }
 
 E_Window::~E_Window(){
         
+}
+
+void E_Window::InitializeSegmentationWorker(){
+    //Initialize Segmentation Worker
+    //Initialize Thread        
+    m_segmentationWorker = new E_SegmentationThread();
+    connect(m_segmentationWorker, SIGNAL(onCalculated(float)), this, SLOT(OnSegmentationCalculated(float)));
+    connect(m_segmentationWorker, SIGNAL(finished()), this, SLOT(OnFinishedSegmentation()));
 }
 
 QToolBar* E_Window::InitToolbar(){
@@ -213,14 +225,6 @@ void E_Window::RunSegmentation(){
 
 
     //Initialize Segmentation Thread.
-    if(m_segmentationWorker == NULL){
-
-        //Initialize Thread        
-        m_segmentationWorker = new E_SegmentationThread();
-        connect(m_segmentationWorker, SIGNAL(onCalculated(float)), this, SLOT(OnSegmentationCalculated(float)));
-        connect(m_segmentationWorker, SIGNAL(finished()), this, SLOT(OnFinishedSegmentation()));
-        
-    }
     //Move To Thread
     QThread* thread = new QThread;
     connect(thread, SIGNAL(started()), m_segmentationWorker, SLOT(process()));
@@ -240,6 +244,8 @@ void E_Window::OnSegmentationCalculated(float i){
 
     std::ostringstream out;
     out << std::setprecision(2) << std::to_string(i);
+    
+    E_Manager::Mgr()->PopLog();
     E_Manager::Mgr()->SetLog("segmentation ", out.str().c_str(), "% done" , NULL);
 
     E_Manager::Mgr()->RedrawAll(false);
@@ -248,7 +254,9 @@ void E_Window::OnSegmentationCalculated(float i){
 
 void E_Window::OnFinishedSegmentation(){
     E_Manager::Mgr()->SetLog("Segmentation Finihsed! ", NULL);
+    m_volumeTreeWidget->SetCurrentItemState(true);
 }
+
 
 void E_Window::ToggleAxlSlice(int state){
     E_Manager::VolumeMgr()->Toggle3DSlice(0, state);
