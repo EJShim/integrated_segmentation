@@ -88,6 +88,7 @@ QToolBar* E_SegmentationDialog::LowerToolbar(){
 
     //Play
     QAction* runAction = new QAction(QIcon(":/images/pantone-2.png"), "Run", this);
+    connect(runAction, SIGNAL(triggered()), this, SLOT(onStartSegmentation()));
     toolbar->addAction(runAction);
 
     //Slider
@@ -99,6 +100,7 @@ QToolBar* E_SegmentationDialog::LowerToolbar(){
 
     //Save
     QAction* saveAction = new QAction(QIcon(":/images/pantone-2.png"), "Set", this);
+    connect(saveAction, SIGNAL(triggered()), this, SLOT(onSaveGroundTruth()));
     toolbar->addAction(saveAction);
 
 
@@ -110,8 +112,21 @@ void E_SegmentationDialog::UpdateSlider(int len){
     m_sliceSlider->setRange(2, len-3);
 }
 
+
+/////////////SLOTS/////////////////////////////
 void E_SegmentationDialog::onSliderChange(int idx){
 
     E_Manager::SegmentationMgr()->GetVolume()->SetSlice(E_Volume::SAG, idx);
     E_Manager::SegmentationMgr()->Redraw(false);
+}
+
+
+void E_SegmentationDialog::onStartSegmentation(){
+    std::cout << "start segmentation" << std::endl;
+}
+void E_SegmentationDialog::onFinishSegmentation(){
+    std::cout << "segmentation finished" << std::endl;
+}
+void E_SegmentationDialog::onSaveGroundTruth(){
+    std::cout << "Set Ground Truth " << std::endl;
 }

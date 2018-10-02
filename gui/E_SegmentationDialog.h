@@ -24,6 +24,9 @@ class E_SegmentationDialog : public QDialog{
 
     public Q_SLOTS:
     void onSliderChange(int);
+    void onStartSegmentation();
+    void onFinishSegmentation();
+    void onSaveGroundTruth();
 
 
 };
