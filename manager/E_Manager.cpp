@@ -22,6 +22,7 @@ E_Manager::~E_Manager(){
 
 E_Manager* E_Manager::m_instance;
 E_VolumeManager* E_Manager::m_volumeManager;
+E_SegmentationManager* E_Manager::m_segmentationManager;
 
 E_Manager* E_Manager::Mgr(){
     if(m_instance == NULL){
@@ -38,6 +39,15 @@ E_VolumeManager* E_Manager::VolumeMgr(){
     }
 
     return m_volumeManager;
+}
+
+E_SegmentationManager* E_Manager::SegmentationMgr(){
+    if(m_segmentationManager == NULL){
+        m_segmentationManager = new E_SegmentationManager();
+        atexit(DestroySegmentationManager);
+    }
+
+    return m_segmentationManager;
 }
 
 void E_Manager::Initialize(){

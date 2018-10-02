@@ -10,6 +10,7 @@
 #include <QString>
 
 #include "E_VolumeManager.h"
+#include "E_SegmentationManager.h"
 
 class E_Manager{
     public:
@@ -23,13 +24,16 @@ class E_Manager{
     private:
     static E_Manager* m_instance;
     static E_VolumeManager* m_volumeManager;
+    static E_SegmentationManager* m_segmentationManager;
 
     static void Destroy(){delete m_instance;}
     static void DestroyVolumeManager(){delete m_volumeManager;}
+    static void DestroySegmentationManager(){delete m_segmentationManager;}
 
     public:
     static E_Manager* Mgr();
     static E_VolumeManager* VolumeMgr();
+    static E_SegmentationManager* SegmentationMgr();
 
     public:
     void Initialize();

@@ -1,6 +1,8 @@
 #include "E_Window.h"
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QSplashScreen>
+
 #include <iostream>
 #include <E_DicomSeries.h>
 #include <QGridLayout>
@@ -13,10 +15,22 @@
 #include <math.h>
 #include <iomanip>
 
+
 E_Window::E_Window(QWidget* parent):QMainWindow(parent){
 
+    //Open Splash
+    QSplashScreen* splash = new QSplashScreen(QPixmap(":/images/splash.png"));
+    QFont splashFont;
+    splashFont.setFamily("Arial");
+    splashFont.setBold(true);
+    splashFont.setPixelSize(25);
+
+    splash->setFont(splashFont);
+    splash->showMessage("initializing segmentation network...", Qt::AlignBottom , Qt::yellow);
+    splash->show();
     //Initialize Woreker
     InitializeSegmentationWorker();
+    splash->showMessage("segmentation network import completed", Qt::AlignBottom , Qt::yellow);
 
 
     //initialize screen size
@@ -35,6 +49,10 @@ E_Window::E_Window(QWidget* parent):QMainWindow(parent){
     this->CreateDockWindows();
 
     this->showMaximized();
+
+
+    //Close Splash
+    splash->finish(this);
 
 
 }
@@ -219,6 +237,9 @@ void E_Window::ImportVolume(){
 
 void E_Window::RunSegmentation(){
 
+    E_Manager::SegmentationMgr()->InitializeSegmentation();
+
+    return;
     //Make Blank Ground Truth
     E_Manager::VolumeMgr()->MakeBlankGroundTruth();
     m_volumeTreeWidget->Update();
@@ -229,8 +250,6 @@ void E_Window::RunSegmentation(){
     QThread* thread = new QThread;
     connect(thread, SIGNAL(started()), m_segmentationWorker, SLOT(process()));
     m_segmentationWorker->moveToThread(thread);
-    
-
 
     ///Set Patient Index here
     thread->start();
