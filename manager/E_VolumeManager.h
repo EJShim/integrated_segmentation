@@ -97,8 +97,7 @@ class E_VolumeManager{
 
     void UpdateGroundTruth(int idx);
 
-    protected:
-    vtkSmartPointer<vtkImageData> ConvertITKtoVTKImageData(ImageType::Pointer itkImage);
+    vtkSmartPointer<vtkImageData> ConvertITKtoVTKImageData(ImageType::Pointer itkImage, bool orientation = true);
 };
 
 #endif //E_VOLUMEMANAGER_H

@@ -7,7 +7,11 @@
 #include <vtkSmartPointer.h>
 #include <vtkRenderer.h>
 #include <vtkGenericOpenGLRenderWindow.h>
+#include <vtkCamera.h>
+#include <vtkCommand.h>
+#include <vtkInteractorStyleUser.h>
 #include <QVTKOpenGLWidget.h>
+
 
 E_SegmentationDialog::E_SegmentationDialog(QWidget* parent){
     Initialize();
@@ -19,10 +23,8 @@ void E_SegmentationDialog::Initialize(){
     setLayout(layout);
     
     //Add Widgets
-    layout->addWidget(RendererWidgets(), 5);
-    layout->addWidget(ButtonWidgets(), 1);
-
-
+    layout->addWidget(RendererWidgets());
+    layout->addWidget(LowerToolbar());
 
 
     //Resize according to the screen size
@@ -58,18 +60,58 @@ QWidget* E_SegmentationDialog::RendererWidgets(){
     widget->layout()->addWidget(sliceWidget);
 
     vtkSmartPointer<vtkGenericOpenGLRenderWindow> sliceRenWin = vtkSmartPointer<vtkGenericOpenGLRenderWindow>::New();
+    vtkSmartPointer<vtkInteractorStyleUser> interactorStyle = vtkSmartPointer<vtkInteractorStyleUser>::New();
     sliceWidget->SetRenderWindow(sliceRenWin);
 
+
     vtkSmartPointer<vtkRenderer> sliceRenderer = E_Manager::SegmentationMgr()->GetSliceRenderer();
+    sliceRenderer->GetActiveCamera()->ParallelProjectionOn();
     sliceRenWin->AddRenderer(sliceRenderer);
     sliceRenWin->Render();
+
+    sliceRenWin->GetInteractor()->SetInteractorStyle(interactorStyle);
 
     return widget;
 }
 
-QWidget* E_SegmentationDialog::ButtonWidgets(){
-    QWidget* widget = new QWidget();
-    widget->setLayout(new QHBoxLayout());
+QToolBar* E_SegmentationDialog::LowerToolbar(){
+    QRect rec = QApplication::desktop()->screenGeometry();
+    int height = rec.height();
+    int iconSize = height / 25;
 
-    return widget;
+    //Initialize Toolbar
+    QToolBar* toolbar = new QToolBar();
+    toolbar->setIconSize(QSize(iconSize, iconSize));
+    toolbar->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+    toolbar->setMovable(false);
+
+
+    //Play
+    QAction* runAction = new QAction(QIcon(":/images/pantone-2.png"), "Run", this);
+    toolbar->addAction(runAction);
+
+    //Slider
+    m_sliceSlider = new QSlider(Qt::Horizontal);
+    m_sliceSlider->setSingleStep(1);
+    m_sliceSlider->setRange(2, 12);
+    connect(m_sliceSlider, SIGNAL(valueChanged(int)), this, SLOT(onSliderChange(int)));
+    toolbar->addWidget(m_sliceSlider);
+
+    //Save
+    QAction* saveAction = new QAction(QIcon(":/images/pantone-2.png"), "Set", this);
+    toolbar->addAction(saveAction);
+
+
+
+    return toolbar;
+}
+
+void E_SegmentationDialog::UpdateSlider(int len){
+    m_sliceSlider->setRange(2, len-3);
+}
+
+void E_SegmentationDialog::onSliderChange(int idx){
+
+    E_Manager::SegmentationMgr()->GetVolume()->SetSlice(E_Volume::SAG, idx);
+    E_Manager::SegmentationMgr()->Redraw(false);
 }

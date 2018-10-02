@@ -391,15 +391,25 @@ void E_VolumeManager::RemoveGroundTruth(){
     m_bGTInRenderer = false;
 }
 
-vtkSmartPointer<vtkImageData> E_VolumeManager::ConvertITKtoVTKImageData(ImageType::Pointer itkImage){
-    OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
-    orienter->UseImageDirectionOn();
-    orienter->SetInput(itkImage);
-    orienter->Update();
+vtkSmartPointer<vtkImageData> E_VolumeManager::ConvertITKtoVTKImageData(ImageType::Pointer itkImage, bool orientation){
+    
+    ImageType::Pointer image = itkImage;
+    
+    if(orientation){
+        //set orientation
+        OrientImageFilterType::Pointer orienter = OrientImageFilterType::New();
+        orienter->UseImageDirectionOn();
+        orienter->SetInput(image);
+        orienter->Update();
+
+        image = orienter->GetOutput();
+
+    }
+
     
     // Convert to vtkimagedataclear
     itkVtkConverter::Pointer conv = itkVtkConverter::New();
-    conv->SetInput(orienter->GetOutput());
+    conv->SetInput(image);
     conv->Update();
 
     //should deep copy, or the pointer will be removed here.
@@ -411,13 +421,13 @@ vtkSmartPointer<vtkImageData> E_VolumeManager::ConvertITKtoVTKImageData(ImageTyp
 }
 
 E_VolumeManager::ImageType::Pointer E_VolumeManager::GetCurrentImageData(){
-    if(m_currentSelectedParentIdx == -1 || m_currentSelectedSeries == -1) return NULL;
+    if(m_currentSelectedParentIdx == -1 || m_currentSelectedSeries == -1) return nullptr;
 
     return m_patientList[m_currentSelectedParentIdx]->GetImageData(m_currentSelectedSeries);
 }
 
 E_VolumeManager::ImageType::Pointer E_VolumeManager::GetCurrentGroundTruthData(){
-    if(m_currentSelectedParentIdx == -1 || m_currentSelectedSeries == -1) return NULL;
+    if(m_currentSelectedParentIdx == -1 || m_currentSelectedSeries == -1) return nullptr;
 
     return m_patientList[m_currentSelectedParentIdx]->GetGroundTruth(m_currentSelectedSeries);
 }
