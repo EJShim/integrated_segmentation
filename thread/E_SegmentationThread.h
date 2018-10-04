@@ -26,7 +26,7 @@ class E_SegmentationThread : public QObject{
 
     signals:
     void finished();
-    void onCalculated(float i);
+    void onCalculated(int i);
 
     protected:
     // tensorflow::Session m_session;

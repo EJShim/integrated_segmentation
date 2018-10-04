@@ -61,6 +61,7 @@ class E_Volume : public vtkVolume{
     public:    
     void SetImageData(vtkSmartPointer<vtkImageData>);
     void SetGroundTruth(vtkSmartPointer<vtkImageData>);
+    void RemoveGroundTruth();
     vtkSmartPointer<vtkImageData> GetGroundTruth(){return m_gt_imageData;}
     void AssignGroundTruthVolume(int slice, tensorflow::Tensor tensorImage);
 

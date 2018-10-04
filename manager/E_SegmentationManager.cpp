@@ -11,6 +11,9 @@ E_SegmentationManager::E_SegmentationManager(){
 
     m_mainRenderer = NULL;
     m_sliceRenderer = NULL;
+
+    m_targetImage = nullptr;
+    m_mask = nullptr;
 }
 
 E_SegmentationManager::~E_SegmentationManager(){
@@ -19,23 +22,20 @@ E_SegmentationManager::~E_SegmentationManager(){
 
 void E_SegmentationManager::InitializeSegmentation(){
 
-    ImageType::Pointer itkImage = E_Manager::VolumeMgr()->GetCurrentImageData();
-    if(itkImage == nullptr){
+    m_targetImage = E_Manager::VolumeMgr()->GetCurrentImageData();
+    if(m_targetImage == nullptr){
         E_Manager::Mgr()->SetLog("selecte image first", NULL);
 
         return;
     }
 
-    vtkSmartPointer<vtkImageData> imageData = E_Manager::VolumeMgr()->ConvertITKtoVTKImageData(itkImage, false);
+    vtkSmartPointer<vtkImageData> imageData = E_Manager::VolumeMgr()->ConvertITKtoVTKImageData(m_targetImage, false);
     int* dims = imageData->GetDimensions();
     GetDialog()->UpdateSlider(dims[2]);
 
     //Make Volume
     if(m_volume == nullptr){
         m_volume = vtkSmartPointer<E_Volume>::New();
-    }else{
-        GetMainRenderer()->RemoveVolume(m_volume);
-        GetSliceRenderer()->RemoveViewProp(m_volume->GetImageSlice(E_Volume::SAG));
     }
 
 
@@ -86,4 +86,59 @@ void E_SegmentationManager::Redraw(bool reset){
 
     GetMainRenderer()->GetRenderWindow()->Render();
     GetSliceRenderer()->GetRenderWindow()->Render();
+}
+
+void E_SegmentationManager::StartSegmentation(){    
+    if(m_targetImage == nullptr) return;
+
+    //Make Blandk Ground Truth and set
+    m_mask = E_Manager::VolumeMgr()->MakeBlankGroundTruth(m_targetImage);
+
+    vtkSmartPointer<vtkImageData> maskData = E_Manager::VolumeMgr()->ConvertITKtoVTKImageData(m_mask, false);
+    m_volume->SetGroundTruth(maskData);
+
+    GetMainRenderer()->AddVolume(m_volume->GetGroundTruthVolume());
+    GetSliceRenderer()->AddViewProp(m_volume->GetGroundTruthImageSlice(E_Volume::SAG));
+
+    Redraw(false);
+
+}
+
+
+void E_SegmentationManager::OnSegmentationProcess(int idx){
+    // UpdateVisualization();
+}
+
+void E_SegmentationManager::FinishSegmentation(){
+    UpdateVisualization();
+    Redraw(false);
+}
+
+void E_SegmentationManager::OnCloseWork(){
+    //Remove Volumes From Renderer
+    GetMainRenderer()->RemoveVolume(m_volume);
+    GetSliceRenderer()->RemoveViewProp(m_volume->GetImageSlice(E_Volume::SAG));
+
+
+    //Remove Ground Truth if it is in
+     if(m_mask != nullptr){
+         GetMainRenderer()->RemoveVolume(m_volume->GetGroundTruthVolume());
+         GetSliceRenderer()->RemoveViewProp(m_volume->GetGroundTruthImageSlice(E_Volume::SAG));
+     }
+
+     m_mask = nullptr;
+}
+
+void E_SegmentationManager::UpdateVisualization(){
+    
+    if(m_mask == nullptr) return;
+    //Try memcpy way
+    vtkSmartPointer<vtkImageData> maskData = m_volume->GetGroundTruth();
+    maskData->AllocateScalars(VTK_FLOAT, 1);
+    
+    
+    int* dims = maskData->GetDimensions();
+
+    memcpy(maskData->GetScalarPointer(), m_mask->GetBufferPointer(), dims[0]*dims[1]*dims[2]*sizeof(float));
+    // m_volume->GetGroundTruthVolume()->Update();
 }

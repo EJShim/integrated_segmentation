@@ -11,7 +11,6 @@
 #include <QFileInfo>
 #include <QTimer>
 #include <QSettings>
-#include <QThread>
 #include <math.h>
 #include <iomanip>
 
@@ -29,7 +28,7 @@ E_Window::E_Window(QWidget* parent):QMainWindow(parent){
     splash->showMessage("initializing segmentation network...", Qt::AlignBottom , Qt::yellow);
     splash->show();
     //Initialize Woreker
-    InitializeSegmentationWorker();
+    E_Manager::SegmentationMgr()->GetDialog()->InitializeNetwork();
     splash->showMessage("segmentation network import completed", Qt::AlignBottom , Qt::yellow);
 
 
@@ -59,14 +58,6 @@ E_Window::E_Window(QWidget* parent):QMainWindow(parent){
 
 E_Window::~E_Window(){
         
-}
-
-void E_Window::InitializeSegmentationWorker(){
-    //Initialize Segmentation Worker
-    //Initialize Thread        
-    m_segmentationWorker = new E_SegmentationThread();
-    connect(m_segmentationWorker, SIGNAL(onCalculated(float)), this, SLOT(OnSegmentationCalculated(float)));
-    connect(m_segmentationWorker, SIGNAL(finished()), this, SLOT(OnFinishedSegmentation()));
 }
 
 QToolBar* E_Window::InitToolbar(){
@@ -238,21 +229,6 @@ void E_Window::ImportVolume(){
 void E_Window::RunSegmentation(){
 
     E_Manager::SegmentationMgr()->InitializeSegmentation();
-
-    return;
-    //Make Blank Ground Truth
-    E_Manager::VolumeMgr()->MakeBlankGroundTruth();
-    m_volumeTreeWidget->Update();
-
-
-    //Initialize Segmentation Thread.
-    //Move To Thread
-    QThread* thread = new QThread;
-    connect(thread, SIGNAL(started()), m_segmentationWorker, SLOT(process()));
-    m_segmentationWorker->moveToThread(thread);
-
-    ///Set Patient Index here
-    thread->start();
 }
 
 void E_Window::OnSegmentationCalculated(float i){

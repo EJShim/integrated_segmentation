@@ -71,6 +71,7 @@ class E_VolumeManager{
 
     //Make Empty image data
     void MakeBlankGroundTruth();
+    ImageType::Pointer MakeBlankGroundTruth(ImageType::Pointer image);
 
     /// Because of bug
     void InitializeHistogram();

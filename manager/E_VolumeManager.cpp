@@ -152,6 +152,25 @@ void E_VolumeManager::MakeBlankGroundTruth(){
     E_Manager::Mgr()->RedrawAll(false);    
 }
 
+
+E_VolumeManager::ImageType::Pointer E_VolumeManager::MakeBlankGroundTruth(ImageType::Pointer itkImage){    
+    ////////////Here, Use ITK
+
+    //Deep Copy Current Image
+    typedef itk::ImageDuplicator<ImageType> DuplicatorType;
+    DuplicatorType::Pointer duplicator = DuplicatorType::New();
+    duplicator->SetInputImage(itkImage);
+    duplicator->Update();
+    ImageType::Pointer gtImage = duplicator->GetOutput();
+
+    //Make Zero Tensor- 
+    ImageType::SizeType size = gtImage->GetLargestPossibleRegion().GetSize();
+    tensorflow::Tensor zero_tensor(tensorflow::DT_FLOAT, {int(size[0]), int(size[1]), int(size[2])});
+    memcpy(gtImage->GetBufferPointer(), zero_tensor.tensor_data().data(), zero_tensor.TotalBytes());
+
+    return gtImage;
+}
+
 void E_VolumeManager::UpdateGroundTruth(int idx){
 
     //Get Current Ground Truth Image.

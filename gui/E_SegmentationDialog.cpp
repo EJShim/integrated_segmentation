@@ -3,6 +3,7 @@
 #include <QRect>
 #include <QApplication>
 #include <QDesktopWidget>
+#include <QThread>
 #include <QVBoxLayout>
 #include <vtkSmartPointer.h>
 #include <vtkRenderer.h>
@@ -14,7 +15,10 @@
 
 
 E_SegmentationDialog::E_SegmentationDialog(QWidget* parent){
+    m_segmentationWorker = nullptr;
+    
     Initialize();
+    connect(this, SIGNAL(finished(int)), this, SLOT(onClose(int)));
 }
 
 void E_SegmentationDialog::Initialize(){
@@ -32,8 +36,13 @@ void E_SegmentationDialog::Initialize(){
     int height = rec.height();
     int width = rec.width();
     resize(width*0.75, height*0.75);
-    
-    
+}
+
+void E_SegmentationDialog::InitializeNetwork(){
+        //Initialize Segmentation Workere
+    m_segmentationWorker = new E_SegmentationThread();
+    connect(m_segmentationWorker, SIGNAL(onCalculated(int)), this, SLOT(onProgressSegmentation(int)));
+    connect(m_segmentationWorker, SIGNAL(finished()), this, SLOT(onFinishSegmentation()));
 }
 
 QWidget* E_SegmentationDialog::RendererWidgets(){
@@ -121,12 +130,35 @@ void E_SegmentationDialog::onSliderChange(int idx){
 }
 
 
-void E_SegmentationDialog::onStartSegmentation(){
-    std::cout << "start segmentation" << std::endl;
+void E_SegmentationDialog::onStartSegmentation(){    
+    E_Manager::SegmentationMgr()->StartSegmentation();
+
+
+    //Move To Thread
+    QThread* thread = new QThread;
+    connect(thread, SIGNAL(started()), m_segmentationWorker, SLOT(process()));
+    m_segmentationWorker->moveToThread(thread);
+
+    ///Set Patient Index here
+    thread->start();
 }
+
+
+void E_SegmentationDialog::onProgressSegmentation(int idx){
+    ///Update Visualization
+    E_Manager::SegmentationMgr()->OnSegmentationProcess(idx);
+
+    m_sliceSlider->setValue(idx);
+}
+
 void E_SegmentationDialog::onFinishSegmentation(){
+    E_Manager::SegmentationMgr()->FinishSegmentation();
     std::cout << "segmentation finished" << std::endl;
 }
 void E_SegmentationDialog::onSaveGroundTruth(){
     std::cout << "Set Ground Truth " << std::endl;
+}
+
+void E_SegmentationDialog::onClose(int result){
+    E_Manager::SegmentationMgr()->OnCloseWork();
 }

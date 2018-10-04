@@ -44,10 +44,9 @@ void E_SegmentationThread::process(){
     
     // if(m_patientIdx == -1 || m_sereisIdx == -1) return;
     //Get Current Image Data
-    m_imageData = E_Manager::VolumeMgr()->GetCurrentImageData();
+    m_imageData = E_Manager::SegmentationMgr()->GetTargetImage();
     ImageType::SizeType size = m_imageData->GetLargestPossibleRegion().GetSize();
-    int slices = int(size[2]);    
-
+    int slices = int(size[2]);
 
     //Get Session
     tensorflow::Session* session = m_sessionContainer.session.get();    
@@ -73,9 +72,7 @@ void E_SegmentationThread::process(){
         AssignGroundTruth(i, outputs[0]);
         
         //Emit Current Progression
-
-        float progress = (i-2)*100.0 / (slices-5);        
-        emit onCalculated(progress);
+        emit onCalculated(i);
     }
 
     //Make Big Result Tensor,, Emit,, that matters??
@@ -121,9 +118,20 @@ E_SegmentationThread::ImageType::Pointer E_SegmentationThread::GetSlice(int idx)
 
 void E_SegmentationThread::AssignGroundTruth(int idx, tensorflow::Tensor tensor){
     //Get Current Ground Truth Image.
-    ImageType::Pointer itkImage = E_Manager::VolumeMgr()->GetCurrentGroundTruthData();
+    ImageType::Pointer itkImage = E_Manager::SegmentationMgr()->GetMaskImage();
     //Memcopy Tensor information to the gt
     ImageType::SizeType size = itkImage->GetLargestPossibleRegion().GetSize();
     int memoryIdx = int(size[0]) * int(size[1]) * idx;
     memcpy(itkImage->GetBufferPointer() + memoryIdx, tensor.tensor_data().data(), tensor.TotalBytes());
+
+
+    return;
+
+    //Assign Groudn Truth For Visualization
+    vtkSmartPointer<E_Volume> currentVolume = E_Manager::SegmentationMgr()->GetVolume();
+    vtkSmartPointer<vtkImageData> vtkImage = currentVolume->GetGroundTruth();
+    
+    int* dims = vtkImage->GetDimensions();
+    int memIdx = dims[0] * dims[1] * idx;
+    memcpy(static_cast<float*>(vtkImage->GetScalarPointer())+memIdx, tensor.tensor_data().data(), tensor.TotalBytes());
 }

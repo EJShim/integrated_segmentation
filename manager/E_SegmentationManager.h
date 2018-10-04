@@ -29,6 +29,10 @@ class E_SegmentationManager{
     //Volume Actor
     vtkSmartPointer<E_Volume> m_volume;
 
+    /// Target segmentation image and mask
+    ImageType::Pointer m_targetImage;
+    ImageType::Pointer m_mask;
+
 
     public:
     void InitializeSegmentation();
@@ -44,5 +48,20 @@ class E_SegmentationManager{
 
     vtkSmartPointer<vtkRenderer> GetMainRenderer();
     vtkSmartPointer<vtkRenderer> GetSliceRenderer();
+
+    ImageType::Pointer GetTargetImage(){return m_targetImage;};
+    ImageType::Pointer GetMaskImage(){return m_mask;};
+
+
+    //Start Segmentation
+    void StartSegmentation();
+    void OnSegmentationProcess(int idx);
+    void FinishSegmentation();
+
+
+    void OnCloseWork();
+
+    protected:
+    void UpdateVisualization();
 
 };
