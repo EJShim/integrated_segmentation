@@ -81,9 +81,9 @@ QWidget* E_SegmentationDialog::RendererWidgets(){
     sliceRenWin->GetInteractor()->SetInteractorStyle(interactorStyle);
 
     #ifdef __APPLE__
-            //Force to use GL>3.2,, mac default is 2.1            
-            mainWidget->setFormat(mainWidget->defaultFormat());              
-            sliceWidget->setFormat(sliceWidget->defaultFormat());        
+        //Force to use GL>3.2,, mac default is 2.1            
+        mainWidget->setFormat(mainWidget->defaultFormat());
+        sliceWidget->setFormat(sliceWidget->defaultFormat());        
     #endif
 
     return widget;
@@ -103,7 +103,8 @@ QToolBar* E_SegmentationDialog::LowerToolbar(){
 
     //Play
     QAction* runAction = new QAction(QIcon(":/images/pantone-2.png"), "Run", this);
-    connect(runAction, SIGNAL(triggered()), this, SLOT(onStartSegmentation()));
+    runAction->setCheckable(true);
+    connect(runAction, SIGNAL(toggled(bool)), this, SLOT(onStartSegmentation(bool)));
     toolbar->addAction(runAction);
 
     //Slider
@@ -136,17 +137,22 @@ void E_SegmentationDialog::onSliderChange(int idx){
 }
 
 
-void E_SegmentationDialog::onStartSegmentation(){    
-    E_Manager::SegmentationMgr()->StartSegmentation();
+void E_SegmentationDialog::onStartSegmentation(bool run){    
+    
+    if(run){
+        E_Manager::SegmentationMgr()->StartSegmentation();
 
+        //Move To Thread
+        QThread* thread = new QThread;
+        connect(thread, SIGNAL(started()), m_segmentationWorker, SLOT(process()));
+        m_segmentationWorker->moveToThread(thread);
 
-    //Move To Thread
-    QThread* thread = new QThread;
-    connect(thread, SIGNAL(started()), m_segmentationWorker, SLOT(process()));
-    m_segmentationWorker->moveToThread(thread);
-
-    ///Set Patient Index here
-    thread->start();
+        ///Set Patient Index here
+        thread->start();
+    }else{
+        m_segmentationWorker->Stop();
+    }
+    
 }
 
 
@@ -170,5 +176,10 @@ void E_SegmentationDialog::onSaveGroundTruth(){
 }
 
 void E_SegmentationDialog::onClose(int result){
+    m_segmentationWorker->Stop();
     E_Manager::SegmentationMgr()->OnCloseWork();
+}
+
+int E_SegmentationDialog::GetSliderValue(){
+    return m_sliceSlider->value();
 }

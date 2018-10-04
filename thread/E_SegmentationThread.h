@@ -36,12 +36,17 @@ class E_SegmentationThread : public QObject{
     int m_patientIdx;
     int m_sereisIdx;
 
+
+    /// Tensorflow Session
     tensorflow::Session* m_session;
     tensorflow::SavedModelBundle m_sessionContainer;
 
+    ///Thread Stopper
+    bool m_bRunning;
+
     public:
-    void SetImageData(ImageType::Pointer data);
-    void SetTargetData(int patientIdx, int seriesIdx);
+    void Stop();
+    
     
     
     protected:

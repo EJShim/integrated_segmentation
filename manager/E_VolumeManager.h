@@ -95,9 +95,6 @@ class E_VolumeManager{
 
 
     /// Assign Ground Truth to Currnet volume
-
-    void UpdateGroundTruth(int idx);
-
     vtkSmartPointer<vtkImageData> ConvertITKtoVTKImageData(ImageType::Pointer itkImage, bool orientation = true);
 };
 

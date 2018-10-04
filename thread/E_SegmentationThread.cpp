@@ -28,15 +28,9 @@ E_SegmentationThread::~E_SegmentationThread(){
 
 void E_SegmentationThread::Initialize(){
     m_imageData = NULL;
-
-    m_patientIdx = -1;
-    m_sereisIdx = -1;
+    m_bRunning = false;
 }
 
-void E_SegmentationThread::SetTargetData(int patientIdx, int seriesIdx){
-    m_patientIdx = patientIdx;
-    m_sereisIdx = seriesIdx;
-}
 
 
 
@@ -56,7 +50,11 @@ void E_SegmentationThread::process(){
     
     
     //Test For 10 slices,, in for test in cpu it should be from 2 to slices-2
-    for(int i=2; i<slices-2 ; i++){
+    m_bRunning = true;
+    int startIdx = E_Manager::SegmentationMgr()->GetDialog()->GetSliderValue();
+    for(int i=startIdx; i<slices-2 ; i++){
+
+        if(!m_bRunning) break;
 
         //Get Input Slice, Convert to Tensor
         ImageType::Pointer slice = GetSlice(i);
@@ -81,8 +79,8 @@ void E_SegmentationThread::process(){
     emit finished();
 }
 
-void E_SegmentationThread::SetImageData(ImageType::Pointer data){
-    m_imageData = data;   
+void E_SegmentationThread::Stop(){
+    m_bRunning = false;
 }
 
 E_SegmentationThread::ImageType::Pointer E_SegmentationThread::GetSlice(int idx){

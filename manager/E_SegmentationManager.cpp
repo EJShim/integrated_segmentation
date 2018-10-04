@@ -96,6 +96,7 @@ void E_SegmentationManager::StartSegmentation(){
 
     vtkSmartPointer<vtkImageData> maskData = E_Manager::VolumeMgr()->ConvertITKtoVTKImageData(m_mask, false);
     m_volume->SetGroundTruth(maskData);
+    m_volume->SetSlice(E_Volume::SAG, GetDialog()->GetSliderValue());
 
     GetMainRenderer()->AddViewProp(m_volume->GetGroundTruthVolume());
     GetMainRenderer()->AddViewProp(m_volume->GetGroundTruthImageSlice3D(E_Volume::SAG));

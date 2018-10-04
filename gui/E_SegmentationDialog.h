@@ -26,6 +26,9 @@ class E_SegmentationDialog : public QDialog{
     ///Update Slider
     void UpdateSlider(int len);
 
+    /// Get SLider Value
+    int GetSliderValue();
+
     protected:
     ///Segmentation Worker    
     E_SegmentationThread* m_segmentationWorker;
@@ -35,7 +38,7 @@ class E_SegmentationDialog : public QDialog{
 
     public Q_SLOTS:
     void onSliderChange(int);
-    void onStartSegmentation();
+    void onStartSegmentation(bool);
     void onProgressSegmentation(int);
     void onFinishSegmentation();
     void onSaveGroundTruth();
