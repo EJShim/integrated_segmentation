@@ -125,4 +125,6 @@ void E_SegmentationThread::AssignGroundTruth(int idx, tensorflow::Tensor tensor)
     int* dims = vtkImage->GetDimensions();
     int memIdx = dims[0] * dims[1] * idx;
     memcpy(static_cast<float*>(vtkImage->GetScalarPointer())+memIdx, tensor.tensor_data().data(), tensor.TotalBytes());
+
+    vtkImage->UpdateCellGhostArrayCache();
 }
