@@ -80,6 +80,12 @@ QWidget* E_SegmentationDialog::RendererWidgets(){
 
     sliceRenWin->GetInteractor()->SetInteractorStyle(interactorStyle);
 
+    #ifdef __APPLE__
+            //Force to use GL>3.2,, mac default is 2.1            
+            mainWidget->setFormat(mainWidget->defaultFormat());              
+            sliceWidget->setFormat(sliceWidget->defaultFormat());        
+    #endif
+
     return widget;
 }
 
