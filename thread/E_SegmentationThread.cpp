@@ -117,15 +117,6 @@ E_SegmentationThread::ImageType::Pointer E_SegmentationThread::GetSlice(int idx)
 }
 
 void E_SegmentationThread::AssignGroundTruth(int idx, tensorflow::Tensor tensor){
-    //Get Current Ground Truth Image.
-    ImageType::Pointer itkImage = E_Manager::SegmentationMgr()->GetMaskImage();
-    //Memcopy Tensor information to the gt
-    ImageType::SizeType size = itkImage->GetLargestPossibleRegion().GetSize();
-    int memoryIdx = int(size[0]) * int(size[1]) * idx;
-    memcpy(itkImage->GetBufferPointer() + memoryIdx, tensor.tensor_data().data(), tensor.TotalBytes());
-
-
-    return;
 
     //Assign Groudn Truth For Visualization
     vtkSmartPointer<E_Volume> currentVolume = E_Manager::SegmentationMgr()->GetVolume();

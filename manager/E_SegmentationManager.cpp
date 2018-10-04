@@ -42,7 +42,7 @@ void E_SegmentationManager::InitializeSegmentation(){
     m_volume->SetImageData(imageData);
     m_volume->Update();
 
-    GetMainRenderer()->AddVolume(m_volume);
+    GetMainRenderer()->AddViewProp(m_volume);
     GetSliceRenderer()->AddViewProp(m_volume->GetImageSlice(E_Volume::SAG));
     Redraw();
 
@@ -97,7 +97,7 @@ void E_SegmentationManager::StartSegmentation(){
     vtkSmartPointer<vtkImageData> maskData = E_Manager::VolumeMgr()->ConvertITKtoVTKImageData(m_mask, false);
     m_volume->SetGroundTruth(maskData);
 
-    GetMainRenderer()->AddVolume(m_volume->GetGroundTruthVolume());
+    GetMainRenderer()->AddViewProp(m_volume->GetGroundTruthVolume());
     GetMainRenderer()->AddViewProp(m_volume->GetGroundTruthImageSlice3D(E_Volume::SAG));
     GetSliceRenderer()->AddViewProp(m_volume->GetGroundTruthImageSlice(E_Volume::SAG));
 
@@ -117,14 +117,14 @@ void E_SegmentationManager::FinishSegmentation(){
 
 void E_SegmentationManager::OnCloseWork(){
     //Remove Volumes From Renderer
-    GetMainRenderer()->RemoveVolume(m_volume);
+    GetMainRenderer()->RemoveViewProp(m_volume);
     GetSliceRenderer()->RemoveViewProp(m_volume->GetImageSlice(E_Volume::SAG));
 
 
     //Remove Ground Truth if it is in
      if(m_mask != nullptr){
-         GetMainRenderer()->RemoveVolume(m_volume->GetGroundTruthVolume());
-         GetMainRenderer()->RemoveVolume(m_volume->GetGroundTruthImageSlice3D(E_Volume::SAG));
+         GetMainRenderer()->RemoveViewProp(m_volume->GetGroundTruthVolume());
+         GetMainRenderer()->RemoveViewProp(m_volume->GetGroundTruthImageSlice3D(E_Volume::SAG));
          GetSliceRenderer()->RemoveViewProp(m_volume->GetGroundTruthImageSlice(E_Volume::SAG));
      }
 
@@ -135,11 +135,14 @@ void E_SegmentationManager::UpdateVisualization(){
     
     if(m_mask == nullptr) return;
     //Try memcpy way
-    vtkSmartPointer<vtkImageData> maskData = m_volume->GetGroundTruth();
-    maskData->AllocateScalars(VTK_FLOAT, 1);
-    
-    
-    int* dims = maskData->GetDimensions();
+    vtkSmartPointer<vtkImageData> maskData = m_volume->GetGroundTruth();    
 
-    memcpy(maskData->GetScalarPointer(), m_mask->GetBufferPointer(), dims[0]*dims[1]*dims[2]*sizeof(float));
+    //Assign
+    int* dims = maskData->GetDimensions();
+    memcpy(m_mask->GetBufferPointer(), maskData->GetScalarPointer(), dims[0]*dims[1]*dims[2]*sizeof(float));
+
+
+    //Re-render vtkImagedata,, this is temp way
+    maskData->AllocateScalars(VTK_FLOAT, 1);   
+    memcpy(maskData->GetScalarPointer(), m_mask->GetBufferPointer(),  dims[0]*dims[1]*dims[2]*sizeof(float));
 }
