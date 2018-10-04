@@ -51,7 +51,9 @@ class E_Volume : public vtkVolume{
     /// Ground Truth Image Slice
     vtkSmartPointer<vtkImageProperty> m_gt_imageProperty;
     vtkSmartPointer<vtkImageSliceMapper> m_gt_sliceMapper[3];
+    vtkSmartPointer<vtkImageSliceMapper> m_gt_sliceMapper3D[3];
     vtkSmartPointer<vtkImageSlice> m_gt_imageSlice[3];
+    vtkSmartPointer<vtkImageSlice> m_gt_imageSlice3D[3];
 
 
     int m_currentTransferFunctionIdx;
@@ -75,6 +77,7 @@ class E_Volume : public vtkVolume{
     vtkSmartPointer<vtkImageSlice> GetImageSlice(int idx){return m_imageSlice[idx];}
     vtkSmartPointer<vtkVolume> GetGroundTruthVolume(){return m_gt_volume;}
     vtkSmartPointer<vtkImageSlice> GetGroundTruthImageSlice(int idx){return m_gt_imageSlice[idx];}
+    vtkSmartPointer<vtkImageSlice> GetGroundTruthImageSlice3D(int idx){return m_gt_imageSlice3D[idx];}
 
     void SetSlice(int idx, int sliceNum);
     void ForwardSlice(int idx);

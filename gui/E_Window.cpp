@@ -229,6 +229,8 @@ void E_Window::ImportVolume(){
 void E_Window::RunSegmentation(){
 
     E_Manager::SegmentationMgr()->InitializeSegmentation();
+
+    UpdateVolumeTree();
 }
 
 void E_Window::OnSegmentationCalculated(float i){

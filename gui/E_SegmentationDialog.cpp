@@ -156,7 +156,11 @@ void E_SegmentationDialog::onFinishSegmentation(){
     std::cout << "segmentation finished" << std::endl;
 }
 void E_SegmentationDialog::onSaveGroundTruth(){
-    std::cout << "Set Ground Truth " << std::endl;
+    if(E_Manager::SegmentationMgr()->GetMaskImage() == nullptr) return;
+
+    E_Manager::VolumeMgr()->SetCurrentGroundTruth(E_Manager::SegmentationMgr()->GetMaskImage());
+
+    //Update Tree
 }
 
 void E_SegmentationDialog::onClose(int result){

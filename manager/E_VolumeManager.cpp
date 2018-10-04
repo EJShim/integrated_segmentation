@@ -125,31 +125,12 @@ void E_VolumeManager::Toggle3DSlice(int idx, int state){
     return;
 }
 
-void E_VolumeManager::MakeBlankGroundTruth(){
+
+void E_VolumeManager::SetCurrentGroundTruth(ImageType::Pointer gtImage){
     if(m_volume == NULL|| m_currentSelectedParentIdx==-1 || m_currentSelectedSeries == -1) return;
-
-    ////////////Here, Use ITK
-    ImageType::Pointer itkImage = m_patientList[m_currentSelectedParentIdx]->GetImageData(m_currentSelectedSeries);
-        
-    //Deep Copy Current Image
-    typedef itk::ImageDuplicator<ImageType> DuplicatorType;
-    DuplicatorType::Pointer duplicator = DuplicatorType::New();
-    duplicator->SetInputImage(itkImage);
-    duplicator->Update();
-    ImageType::Pointer gtImage = duplicator->GetOutput();
-
-    //Make Zero Tensor
-    ImageType::SizeType size = gtImage->GetLargestPossibleRegion().GetSize();
-    tensorflow::Tensor zero_tensor(tensorflow::DT_FLOAT, {int(size[0]), int(size[1]), int(size[2])});
-    memcpy(gtImage->GetBufferPointer(), zero_tensor.tensor_data().data(), zero_tensor.TotalBytes());
 
     //Set Ground Truth
     m_patientList[m_currentSelectedParentIdx]->SetGroundTruth(gtImage, m_currentSelectedSeries);
-
-    //Add To Renderer
-    AddGroundTruth(m_currentSelectedParentIdx, m_currentSelectedSeries);
-    
-    E_Manager::Mgr()->RedrawAll(false);    
 }
 
 

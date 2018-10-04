@@ -70,7 +70,7 @@ class E_VolumeManager{
     void Toggle3DSlice(int idx, int state);
 
     //Make Empty image data
-    void MakeBlankGroundTruth();
+    void SetCurrentGroundTruth(ImageType::Pointer gtImage);
     ImageType::Pointer MakeBlankGroundTruth(ImageType::Pointer image);
 
     /// Because of bug

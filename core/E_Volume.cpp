@@ -27,7 +27,9 @@ E_Volume::E_Volume(){
         m_sliceMapper[i] = NULL;
         m_imageSlice[i] = NULL;
         m_gt_sliceMapper[i] = NULL;
+        m_gt_sliceMapper3D[i] = NULL;
         m_gt_imageSlice[i] = NULL;
+        m_gt_imageSlice3D[i] = NULL;
     }
 
     m_currentTransferFunctionIdx = -1;
@@ -169,72 +171,38 @@ void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
             m_gt_imageSlice[i] = vtkSmartPointer<vtkImageSlice>::New();
             m_gt_imageSlice[i]->SetProperty(m_gt_imageProperty);
             m_gt_imageSlice[i]->SetMapper(m_gt_sliceMapper[i]);
-    
+
+            //3D Slice
+            m_gt_sliceMapper3D[i] = vtkSmartPointer<vtkImageSliceMapper>::New();
+            m_gt_sliceMapper3D[i]->SetOrientation(i);            
+
+            m_gt_imageSlice3D[i] = vtkSmartPointer<vtkImageSlice>::New();
+            m_gt_imageSlice3D[i]->SetProperty(m_gt_imageProperty);
+            m_gt_imageSlice3D[i]->SetMapper(m_gt_sliceMapper3D[i]);
         }
     }
     
     m_gt_volumeMapper->SetInputData(m_gt_imageData);
     m_gt_volume->Update();
 
-    m_gt_sliceMapper[0]->SetInputData(m_gt_imageData);
-    m_gt_imageSlice[0]->Update();
 
-    m_gt_sliceMapper[1]->SetInputData(m_gt_imageData);
-    m_gt_imageSlice[1]->Update();
+    for(int i=0 ; i<3 ; i++){
+        m_gt_sliceMapper[i]->SetInputData(m_gt_imageData);
+        m_gt_imageSlice[i]->Update();
 
-    m_gt_sliceMapper[2]->SetInputData(m_gt_imageData);
-    m_gt_imageSlice[2]->Update();
+        m_gt_sliceMapper3D[i]->SetInputData(m_gt_imageData);
+        m_gt_imageSlice3D[i]->Update();
+
+    }
+
 
     for(int i=0 ; i<3 ; i++){
         int sliceNum = m_gt_sliceMapper[i]->GetSliceNumberMaxValue() / 2;
         m_gt_sliceMapper[i]->SetSliceNumber(sliceNum);
+        m_gt_sliceMapper3D[i]->SetSliceNumber(sliceNum);
     }
 
     
-}
-
-// void E_Volume::Update(){
-    
-
-//     if(m_gt_volumeMapper == NULL) return;
-
-//     m_gt_volume->Update();
-
-//     if(m_gt_sliceMapper[0] == NULL) return;
-    
-//     m_gt_imageSlice[0]->Update();
-//     m_gt_imageSlice[1]->Update();
-//     m_gt_imageSlice[2]->Update();
-
-// }
-
-void E_Volume::AssignGroundTruthVolume(int slice, tensorflow::Tensor tensorImage){
-    if(m_gt_imageData == NULL) return;
-
-    // Deepcopy - assign - reset ground truth (to avoid VTK bug...)
-
-    
-    //Assign to ground-truth imagedata
-    
-    // auto tensorImageMapper = tensorImage.tensor<float,3>();
-    // for(int i=0 ; i<tensorImage.dim_size(1) ; i++){
-    //     for(int j=0 ; j<tensorImage.dim_size(2) ; j++){
-    //         std::cout << tensorImageMapper(0, i, j);
-    //     }
-    // }
-
-    // for(int y=0 ; y<dims[1] ; y++){
-    //     for(int x=0 ; x<dims[0] ; x++){
-    //         float* pointer = static_cast<float*>(imageData->GetScalarPointer(x+extent[0], y+extent[2], slice));            
-    //         pointer[0] = tensorImageMapper(0, x, y);            
-    //     }
-    // }
-
-    //memcpy(m_gt_imageData->GetScalarPointer(0, slice, 0), tensorImage.tensor<float,3>().data(), tensorImage.TotalBytes());
-
-    //m_gt_imageData->DeepCopy(imageData);
-    // SetGroundTruth(imageData);
-
 }
 
 
@@ -244,6 +212,7 @@ void E_Volume::SetSlice(int idx, int sliceNum){
 
     if(m_gt_sliceMapper[idx] == NULL) return;
     m_gt_sliceMapper[idx]->SetSliceNumber(sliceNum);
+    m_gt_sliceMapper3D[idx]->SetSliceNumber(sliceNum);
     
 }
 

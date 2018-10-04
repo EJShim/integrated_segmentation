@@ -98,6 +98,7 @@ void E_SegmentationManager::StartSegmentation(){
     m_volume->SetGroundTruth(maskData);
 
     GetMainRenderer()->AddVolume(m_volume->GetGroundTruthVolume());
+    GetMainRenderer()->AddViewProp(m_volume->GetGroundTruthImageSlice3D(E_Volume::SAG));
     GetSliceRenderer()->AddViewProp(m_volume->GetGroundTruthImageSlice(E_Volume::SAG));
 
     Redraw(false);
@@ -123,6 +124,7 @@ void E_SegmentationManager::OnCloseWork(){
     //Remove Ground Truth if it is in
      if(m_mask != nullptr){
          GetMainRenderer()->RemoveVolume(m_volume->GetGroundTruthVolume());
+         GetMainRenderer()->RemoveVolume(m_volume->GetGroundTruthImageSlice3D(E_Volume::SAG));
          GetSliceRenderer()->RemoveViewProp(m_volume->GetGroundTruthImageSlice(E_Volume::SAG));
      }
 
@@ -140,5 +142,4 @@ void E_SegmentationManager::UpdateVisualization(){
     int* dims = maskData->GetDimensions();
 
     memcpy(maskData->GetScalarPointer(), m_mask->GetBufferPointer(), dims[0]*dims[1]*dims[2]*sizeof(float));
-    // m_volume->GetGroundTruthVolume()->Update();
 }
