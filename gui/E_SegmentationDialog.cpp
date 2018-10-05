@@ -165,7 +165,6 @@ void E_SegmentationDialog::onProgressSegmentation(int idx){
 
 void E_SegmentationDialog::onFinishSegmentation(){
     E_Manager::SegmentationMgr()->FinishSegmentation();
-    std::cout << "segmentation finished" << std::endl;
 }
 void E_SegmentationDialog::onSaveGroundTruth(){
     if(E_Manager::SegmentationMgr()->GetMaskImage() == nullptr) return;

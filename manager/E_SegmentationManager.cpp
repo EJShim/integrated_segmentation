@@ -3,6 +3,7 @@
 #include <vtkImageData.h>
 #include <vtkRenderWindow.h>
 #include <vtkCamera.h>
+#include <vtkPointData.h>
 #include <E_Volume.h>
 
 E_SegmentationManager::E_SegmentationManager(){
@@ -142,8 +143,6 @@ void E_SegmentationManager::UpdateVisualization(){
     int* dims = maskData->GetDimensions();
     memcpy(m_mask->GetBufferPointer(), maskData->GetScalarPointer(), dims[0]*dims[1]*dims[2]*sizeof(float));
 
-
-    //Re-render vtkImagedata,, this is temp way
-    maskData->AllocateScalars(VTK_FLOAT, 1);   
-    memcpy(maskData->GetScalarPointer(), m_mask->GetBufferPointer(),  dims[0]*dims[1]*dims[2]*sizeof(float));
+    //Update Visualization
+    maskData->GetPointData()->GetScalars()->Modified();
 }

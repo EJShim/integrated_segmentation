@@ -181,8 +181,8 @@ void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
             m_gt_imageSlice3D[i]->SetMapper(m_gt_sliceMapper3D[i]);
         }
     }
-    
     m_gt_volumeMapper->SetInputData(m_gt_imageData);
+    
     m_gt_volume->Update();
 
 
@@ -193,16 +193,12 @@ void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
         m_gt_sliceMapper3D[i]->SetInputData(m_gt_imageData);
         m_gt_imageSlice3D[i]->Update();
 
-    }
 
-
-    for(int i=0 ; i<3 ; i++){
+        //Set Slice Middle
         int sliceNum = m_gt_sliceMapper[i]->GetSliceNumberMaxValue() / 2;
         m_gt_sliceMapper[i]->SetSliceNumber(sliceNum);
         m_gt_sliceMapper3D[i]->SetSliceNumber(sliceNum);
     }
-
-    
 }
 
 
