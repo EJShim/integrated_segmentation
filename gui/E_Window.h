@@ -70,8 +70,6 @@ class E_Window : public QMainWindow{
 
     void ImportVolume();
     void RunSegmentation();
-    void OnSegmentationCalculated(float i);
-    void OnFinishedSegmentation();
 
     void ToggleAxlSlice(int state);
     void ToggleCorSlice(int state);

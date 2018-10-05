@@ -233,28 +233,6 @@ void E_Window::RunSegmentation(){
     UpdateVolumeTree();
 }
 
-void E_Window::OnSegmentationCalculated(float i){
-    
-    // Progress
-    E_Manager::VolumeMgr()->UpdateGroundTruth(i);
-    E_Manager::VolumeMgr()->GetCurrentVolume()->SetSlice(1, i);
-
-    std::ostringstream out;
-    out << std::setprecision(2) << std::to_string(i);
-    
-    E_Manager::Mgr()->PopLog();
-    E_Manager::Mgr()->SetLog("segmentation ", out.str().c_str(), "% done" , NULL);
-
-    E_Manager::Mgr()->RedrawAll(false);
-    
-}
-
-void E_Window::OnFinishedSegmentation(){
-    E_Manager::Mgr()->SetLog("Segmentation Finihsed! ", NULL);
-    m_volumeTreeWidget->SetCurrentItemState(true);
-}
-
-
 void E_Window::ToggleAxlSlice(int state){
     E_Manager::VolumeMgr()->Toggle3DSlice(0, state);
 }
