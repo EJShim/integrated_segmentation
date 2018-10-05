@@ -53,7 +53,9 @@ void E_SegmentationThread::process(){
     //Test For 10 slices,, in for test in cpu it should be from 2 to slices-2
     m_bRunning = true;
     int startIdx = E_Manager::SegmentationMgr()->GetDialog()->GetSliderValue();
-    for(int i=startIdx; i<slices-2 ; i++){
+
+    int i;
+    for(i=startIdx; i<slices-2 ; i++){
 
         if(!m_bRunning) break;
 
@@ -71,8 +73,10 @@ void E_SegmentationThread::process(){
         AssignGroundTruth(i, outputs[0]);
         
         //Emit Current Progression
-        emit onCalculated(i);
+        if(!E_Manager::SegmentationMgr()->IsRendering())
+            emit onCalculated(i);
     }
+    emit onCalculated(i);
 
     //Make Big Result Tensor,, Emit,, that matters??
 
@@ -126,5 +130,6 @@ void E_SegmentationThread::AssignGroundTruth(int idx, tensorflow::Tensor tensor)
     memcpy(static_cast<float*>(vtkImage->GetScalarPointer())+memIdx, tensor.tensor_data().data(), tensor.TotalBytes());
 
     //For Visualization Update
-    vtkImage->GetPointData()->GetScalars()->Modified();
+    if(!E_Manager::SegmentationMgr()->IsRendering())
+        vtkImage->GetPointData()->GetScalars()->Modified();
 }

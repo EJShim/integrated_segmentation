@@ -140,8 +140,6 @@ void E_SegmentationDialog::onSliderChange(int idx){
 void E_SegmentationDialog::onStartSegmentation(bool run){    
     
     if(run){
-        E_Manager::SegmentationMgr()->StartSegmentation();
-
         //Move To Thread
         QThread* thread = new QThread;
         connect(thread, SIGNAL(started()), m_segmentationWorker, SLOT(process()));

@@ -17,6 +17,9 @@ class E_SegmentationManager{
 
 
     protected:
+    //Rendering Flag
+    bool m_bRendering;
+
     //Segmentation Dialog
     E_SegmentationDialog* m_dialog;
 
@@ -54,14 +57,16 @@ class E_SegmentationManager{
 
 
     //Start Segmentation
-    void StartSegmentation();
     void OnSegmentationProcess(int idx);
     void FinishSegmentation();
 
 
     void OnCloseWork();
 
+    bool IsRendering(){return m_bRendering;}
+
     protected:
     void UpdateVisualization();
+    
 
 };

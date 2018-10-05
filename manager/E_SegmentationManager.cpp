@@ -15,6 +15,8 @@ E_SegmentationManager::E_SegmentationManager(){
 
     m_targetImage = nullptr;
     m_mask = nullptr;
+
+    m_bRendering = false;
 }
 
 E_SegmentationManager::~E_SegmentationManager(){
@@ -45,6 +47,20 @@ void E_SegmentationManager::InitializeSegmentation(){
 
     GetMainRenderer()->AddViewProp(m_volume);
     GetSliceRenderer()->AddViewProp(m_volume->GetImageSlice(E_Volume::SAG));
+    
+    
+    //Make Blandk Ground Truth and set
+    m_mask = E_Manager::VolumeMgr()->MakeBlankGroundTruth(m_targetImage);
+
+    vtkSmartPointer<vtkImageData> maskData = E_Manager::VolumeMgr()->ConvertITKtoVTKImageData(m_mask, false);
+    m_volume->SetGroundTruth(maskData);
+    m_volume->SetSlice(E_Volume::SAG, GetDialog()->GetSliderValue());
+
+    GetMainRenderer()->AddViewProp(m_volume->GetGroundTruthVolume());
+    GetMainRenderer()->AddViewProp(m_volume->GetGroundTruthImageSlice3D(E_Volume::SAG));
+    GetSliceRenderer()->AddViewProp(m_volume->GetGroundTruthImageSlice(E_Volume::SAG));
+    
+    
     Redraw();
 
     GetDialog()->exec();
@@ -76,6 +92,8 @@ vtkSmartPointer<vtkRenderer> E_SegmentationManager::GetSliceRenderer(){
 }
 
 void E_SegmentationManager::Redraw(bool reset){
+
+    m_bRendering = true;
     //For Renderwindow Initialization
     if(m_dialog == NULL) m_dialog = new E_SegmentationDialog();
 
@@ -87,24 +105,8 @@ void E_SegmentationManager::Redraw(bool reset){
 
     GetMainRenderer()->GetRenderWindow()->Render();
     GetSliceRenderer()->GetRenderWindow()->Render();
-}
 
-void E_SegmentationManager::StartSegmentation(){    
-    if(m_targetImage == nullptr) return;
-
-    //Make Blandk Ground Truth and set
-    m_mask = E_Manager::VolumeMgr()->MakeBlankGroundTruth(m_targetImage);
-
-    vtkSmartPointer<vtkImageData> maskData = E_Manager::VolumeMgr()->ConvertITKtoVTKImageData(m_mask, false);
-    m_volume->SetGroundTruth(maskData);
-    m_volume->SetSlice(E_Volume::SAG, GetDialog()->GetSliderValue());
-
-    GetMainRenderer()->AddViewProp(m_volume->GetGroundTruthVolume());
-    GetMainRenderer()->AddViewProp(m_volume->GetGroundTruthImageSlice3D(E_Volume::SAG));
-    GetSliceRenderer()->AddViewProp(m_volume->GetGroundTruthImageSlice(E_Volume::SAG));
-
-    Redraw(false);
-
+    m_bRendering = false;
 }
 
 
