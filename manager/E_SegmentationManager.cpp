@@ -111,7 +111,8 @@ void E_SegmentationManager::Redraw(bool reset){
 
 
 void E_SegmentationManager::OnSegmentationProcess(int idx){
-    // UpdateVisualization();
+    //Set Modified
+    //m_volume->GetGroundTruth()->GetPointData()->GetScalars()->Modified();
 }
 
 void E_SegmentationManager::FinishSegmentation(){

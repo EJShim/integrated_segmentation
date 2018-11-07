@@ -46,7 +46,6 @@ class E_Volume : public vtkVolume{
     vtkSmartPointer<vtkVolumeProperty> m_gt_volumeProperty;
     vtkSmartPointer<vtkColorTransferFunction> m_gt_colorFunction;
     vtkSmartPointer<vtkPiecewiseFunction> m_gt_opacityFunction;
-    vtkSmartPointer<vtkLookupTable> m_gt_lut;
 
     /// Ground Truth Image Slice
     vtkSmartPointer<vtkImageProperty> m_gt_imageProperty;

@@ -19,7 +19,6 @@ E_Volume::E_Volume(){
     m_gt_colorFunction = NULL;
     m_gt_opacityFunction = NULL;
     m_gt_imageProperty = NULL;
-    m_gt_lut = NULL;
 
     /// Ground Truth Image Slice
 
@@ -145,21 +144,13 @@ void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){
         m_gt_volume->SetMapper(m_gt_volumeMapper);
     }
 
-    //Image
-    if(m_gt_lut == NULL){
-        m_gt_lut = vtkSmartPointer<vtkLookupTable>::New();
-        m_gt_lut->SetTableRange(0.0, 2.0);
-        m_gt_lut->SetHueRange(0.7, 0.0);
-        m_gt_lut->Build();
-    }
-    
     if(m_gt_imageProperty == NULL){
         m_gt_imageProperty = vtkSmartPointer<vtkImageProperty>::New();
         m_gt_imageProperty->SetInterpolationTypeToLinear();                
-        m_gt_imageProperty->SetColorLevel(1.0);
-        m_gt_imageProperty->SetColorWindow(1.0);
+        m_gt_imageProperty->SetColorLevel(2.0);
+        m_gt_imageProperty->SetColorWindow(0.5);
         m_gt_imageProperty->SetOpacity(0.3);
-        m_gt_imageProperty->SetLookupTable(m_gt_lut);
+        m_gt_imageProperty->SetLookupTable(m_gt_colorFunction);
     }
     
 
