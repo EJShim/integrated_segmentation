@@ -32,5 +32,6 @@ class E_TreeWidgetVolume : public QTreeWidget{
     void onItemChanged(QTreeWidgetItem* item, int column);
     void onContextMenu(const QPoint& pos);
     void onImportGroundTruth();
+    void onSaveDicom();
 
 };

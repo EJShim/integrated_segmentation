@@ -59,6 +59,7 @@ class E_VolumeManager{
     //Import Data    
     void ImportDicom(const char* path);
     void ImportGroundTruth(const char* path, int parentIdx, int childIdx);
+    void SaveGroundTruth(const char* path, int parentIdx, int childIdx);
     void AddGroundTruth(int parentIdx, int childIdx);
     void RemoveGroundTruth();
 

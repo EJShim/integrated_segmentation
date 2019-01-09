@@ -186,19 +186,24 @@ void E_TreeWidgetVolume::onItemChanged(QTreeWidgetItem* item, int column){
     QSignalMapper* mapper = new QSignalMapper(this);
     connect(action, SIGNAL(triggered()), this, SLOT(onImportGroundTruth()));
 
+    //Save Ground Truth
+    QAction* saveAction = new QAction("Save Ground Truth", this);
+    connect(saveAction, SIGNAL(triggered()), this, SLOT(onSaveDicom()));
+
     //Pop-up Menu
     QMenu menu(this);
     menu.addAction(action);
+    menu.addAction(saveAction);
     menu.exec( this->mapToGlobal(pos) );
 }
 
 void E_TreeWidgetVolume::onImportGroundTruth(){
     if(m_currentParentIdx == -1 || m_currentChildIdx == -1) return;
 
+    //File Dialog
     const QString DEFAULT_DIR_KEY("default_dir");
     QSettings MySettings;
     QString fileName = QFileDialog::getOpenFileName(this, ("Open File"), MySettings.value(DEFAULT_DIR_KEY).toString() , tr("Dicom file(*.dcm) ;; NII file(*.nii)"));
-    
     if(fileName.length() < 1) return;
     MySettings.setValue(DEFAULT_DIR_KEY,  QDir(fileName).absolutePath());
     QFileInfo info(fileName);
@@ -217,4 +222,22 @@ void E_TreeWidgetVolume::onImportGroundTruth(){
     }
 
     Update();
+}
+
+void E_TreeWidgetVolume::onSaveDicom(){
+     if(m_currentParentIdx == -1 || m_currentChildIdx == -1) return;
+
+    //File Dialog
+    const QString DEFAULT_DIR_KEY("default_dir");
+    QSettings MySettings;
+    QString dirName = QFileDialog::getExistingDirectory(this, ("Save Ground Truth"), MySettings.value(DEFAULT_DIR_KEY).toString());
+    if(dirName.length() < 1) return;
+    MySettings.setValue(DEFAULT_DIR_KEY,  QDir(dirName).absolutePath());
+    
+
+    //Set Save Path
+    // dirName += "/exported";
+    E_Manager::Mgr()->SetLog("Save Ground Truth ",  std::to_string(m_currentParentIdx).c_str(), std::to_string(m_currentChildIdx).c_str(), NULL);
+    E_Manager::VolumeMgr()->SaveGroundTruth(dirName.toStdString().c_str(), m_currentParentIdx, m_currentChildIdx);
+
 }

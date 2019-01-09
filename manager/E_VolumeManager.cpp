@@ -12,7 +12,7 @@
 #include <vtkIntArray.h>
 #include <vtkFieldData.h>
 #include <vtkBarChartActor.h>
-#include<vtkLegendBoxActor.h>
+#include <vtkLegendBoxActor.h>
 #include <vtkColorTransferFunctionItem.h>
 #include <vtkPiecewiseFunctionItem.h>
 #include <vtkPiecewiseControlPointsItem.h>
@@ -22,10 +22,15 @@
 #include <vtkAxis.h>
 #include <itkImageDuplicator.h>
 #include <itkNiftiImageIO.h>
+#include "itkGDCMImageIO.h"
 #include "tensorflow/core/framework/tensor.h"
 #include <itkThresholdImageFilter.h>
 #include "itkBinaryThresholdImageFilter.h"
 #include "itkGDCMSeriesFileNames.h"
+#include <itkImageFileWriter.h>
+#include <itkImageSeriesWriter.h>
+#include <itkGDCMSeriesFileNames.h>
+#include <itkNumericSeriesFileNames.h>
 #include <math.h>
 
 
@@ -85,6 +90,56 @@ void E_VolumeManager::ImportGroundTruth(const char* path, int parentIdx, int chi
     // Set Ground Truth
     m_patientList[parentIdx]->SetGroundTruth(thresholdfilter->GetOutput(), childIdx);
     E_Manager::Mgr()->SetLog("Ground Truth Set", NULL);
+}
+
+void E_VolumeManager::SaveGroundTruth(const char* path, int parentIdx, int childIdx){
+    ///Set Ground Truth
+    ImageType::Pointer itkImage = m_patientList[parentIdx]->GetGroundTruth(childIdx);
+    if(itkImage == nullptr){
+        E_Manager::Mgr()->SetLog("No Ground Truth is Set For This Image.. Returning", NULL);
+        return;
+    }
+    DicomReader::Pointer container = m_patientList[parentIdx]->GetImageContainer(childIdx);
+
+    //Itk Image Writer
+    using Image2DType = itk::Image<signed short, 2>;
+    using SeriesWriterType = itk::ImageSeriesWriter< ImageType, Image2DType>;
+    using NamesGeneratorType = itk::GDCMSeriesFileNames;
+    using ImageIOType = itk::GDCMImageIO ;
+    
+    ImageIOType::Pointer gdcmImageIO = ImageIOType::New();
+    NamesGeneratorType::Pointer namesGenerator = NamesGeneratorType::New();
+
+    //Generate Filenames
+    itk::NumericSeriesFileNames::Pointer numericSeriesFileNames = itk::NumericSeriesFileNames::New();
+    numericSeriesFileNames->SetStartIndex(0);
+    numericSeriesFileNames->SetEndIndex(container->GetFileNames().size()-1);
+    numericSeriesFileNames->SetIncrementIndex(1);
+    numericSeriesFileNames->SetSeriesFormat("export_%d.dcm");
+
+
+    std::vector<std::string> names = numericSeriesFileNames->GetFileNames();
+    for(int i=0 ; i<names.size() ; i++){
+        names[i] = std::string(path) + "/" + names[i];
+    }
+
+    // Software Guide : BeginCodeSnippet
+    SeriesWriterType::Pointer seriesWriter = SeriesWriterType::New();
+    seriesWriter->SetInput( itkImage );
+    seriesWriter->SetImageIO( gdcmImageIO );
+    seriesWriter->SetFileNames(names);
+    seriesWriter->SetMetaDataDictionaryArray(container->GetMetaDataDictionaryArray());
+
+    try
+    {
+        seriesWriter->Update();
+    }
+    catch( itk::ExceptionObject & excp )
+    {
+        std::cerr << "Exception thrown while writing the series " << std::endl;
+        std::cerr << excp << std::endl;
+        return;    
+    }
 }
 
 void E_VolumeManager::ForwardSlice(int idx){

@@ -17,9 +17,13 @@ E_SegmentationThread::E_SegmentationThread(){
 
     Initialize();
 
+    tensorflow::SessionOptions options = tensorflow::SessionOptions();
+    
+
+
     //Initialize Session Container
     std::string path = QCoreApplication::applicationDirPath().toStdString()+"/temp_saved";    
-    tensorflow::LoadSavedModel(tensorflow::SessionOptions(), tensorflow::RunOptions(), path, {"ejshim"}, &m_sessionContainer);
+    tensorflow::LoadSavedModel(options, tensorflow::RunOptions(), path, {"ejshim"}, &m_sessionContainer);
 }
 
 E_SegmentationThread::~E_SegmentationThread(){
