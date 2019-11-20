@@ -132,7 +132,7 @@ void E_SegmentationDialog::UpdateSlider(int len){
 /////////////SLOTS/////////////////////////////
 void E_SegmentationDialog::onSliderChange(int idx){
 
-    E_Manager::SegmentationMgr()->GetVolume()->SetSlice(E_Volume::SAG, idx);
+    E_Manager::SegmentationMgr()->GetVolume()->SetSlice(E_Manager::SegmentationMgr()->GetCurrentSliceDirection(), idx);
     E_Manager::SegmentationMgr()->Redraw(false);
 }
 

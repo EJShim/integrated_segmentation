@@ -24,6 +24,7 @@ class E_ImageSeries{
     DicomReader::Pointer m_imageContainer;
     ImageIOType::Pointer m_dicomIO;
     ImageType::Pointer m_groundTruth;
+    ImageType::Pointer m_imageData;
     int m_numSlices;
 
 
@@ -39,5 +40,8 @@ class E_ImageSeries{
 
     ///Dicom Info by its tag
     std::string GetDicomInfo(std::string tag);
+
+    protected:
+    void PreprocessImageContainer();
 
 };

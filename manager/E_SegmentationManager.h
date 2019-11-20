@@ -36,6 +36,8 @@ class E_SegmentationManager{
     ImageType::Pointer m_targetImage;
     ImageType::Pointer m_mask;
 
+    int m_currentImageSliceDirection;
+
 
     public:
     void InitializeSegmentation();
@@ -45,6 +47,8 @@ class E_SegmentationManager{
 
     //Get Volume
     vtkSmartPointer<E_Volume> GetVolume(){return m_volume;};
+
+    int GetCurrentSliceDirection(){return m_currentImageSliceDirection;}
 
     //Redraw
     void Redraw(bool reset = true);

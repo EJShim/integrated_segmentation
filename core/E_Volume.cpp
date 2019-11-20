@@ -1,5 +1,6 @@
 #include "E_Volume.h"
 #include <iostream>
+#include <vtkImageCast.h>
 
 E_Volume::E_Volume(){
     m_imageData = NULL;
@@ -105,7 +106,8 @@ void E_Volume::SetImageData(vtkSmartPointer<vtkImageData> imageData){
 }
 
 void E_Volume::SetGroundTruth(vtkSmartPointer<vtkImageData> imageData){    
-    m_gt_imageData = imageData;    
+    m_gt_imageData = imageData;
+    std::cout << m_gt_imageData->GetScalarTypeAsString() << std::endl;
 
     if(m_gt_volume == NULL){
         m_gt_volume = vtkSmartPointer<vtkVolume>::New();
@@ -244,7 +246,7 @@ void E_Volume::SetTransferFunction(int idx){
 
     //Adjust CT Scalar Range
     double* scalarRange = m_imageData->GetScalarRange();
-    double huRange[2] = {-1024, 3096};
+    double huRange[2] = {0, 255};
     
     switch(idx){
         case 0:

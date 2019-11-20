@@ -78,7 +78,7 @@ void E_Manager::SetVTKWidget(QVTKOpenGLWidget* widget, int idx){
         renWin->SetInteractor(interactor);
 
         if(idx == 1){
-            this->m_renderer[idx]->GetActiveCamera()->Azimuth(-90.0);
+            this->m_renderer[idx]->GetActiveCamera()->Azimuth(90.0);
         }else if(idx == 2){
             this->m_renderer[idx]->GetActiveCamera()->Elevation(90.0);   
         }

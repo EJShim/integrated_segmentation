@@ -22,7 +22,7 @@ E_SegmentationThread::E_SegmentationThread(){
 
 
     //Initialize Session Container
-    std::string path = QCoreApplication::applicationDirPath().toStdString()+"/temp_saved";    
+    std::string path = QCoreApplication::applicationDirPath().toStdString()+"/weight";    
     tensorflow::LoadSavedModel(options, tensorflow::RunOptions(), path, {"ejshim"}, &m_sessionContainer);
 }
 
@@ -131,7 +131,19 @@ void E_SegmentationThread::AssignGroundTruth(int idx, tensorflow::Tensor tensor)
     
     int* dims = vtkImage->GetDimensions();
     int memIdx = dims[0] * dims[1] * idx;
-    memcpy(static_cast<float*>(vtkImage->GetScalarPointer())+memIdx, tensor.tensor_data().data(), tensor.TotalBytes());
+
+    // //std::cout << idx << std::endl;
+    // if(idx == 160){
+    //     for(int i = 0 ; i < 512 ; i++){
+    //         for(int j=0 ; j<512 ; j++){
+
+    //             float value = tensor.tensor<float, 3>()(0, i ,j); 
+                
+    //             if(value > 0.0 ) std::cout << value;
+    //         }
+    //     }
+    // }
+    memcpy(static_cast<int*>(vtkImage->GetScalarPointer())+memIdx, tensor.tensor_data().data(), tensor.TotalBytes());
 
     //For Visualization Update
     if(!E_Manager::SegmentationMgr()->IsRendering())

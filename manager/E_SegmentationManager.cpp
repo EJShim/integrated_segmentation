@@ -17,6 +17,8 @@ E_SegmentationManager::E_SegmentationManager(){
     m_mask = nullptr;
 
     m_bRendering = false;
+
+    m_currentImageSliceDirection = E_Volume::SAG;
 }
 
 E_SegmentationManager::~E_SegmentationManager(){
@@ -34,7 +36,7 @@ void E_SegmentationManager::InitializeSegmentation(){
 
     vtkSmartPointer<vtkImageData> imageData = E_Manager::VolumeMgr()->ConvertITKtoVTKImageData(m_targetImage, false);
     int* dims = imageData->GetDimensions();
-    GetDialog()->UpdateSlider(dims[2]);
+    GetDialog()->UpdateSlider(dims[m_currentImageSliceDirection]);
 
     //Make Volume
     if(m_volume == nullptr){
@@ -46,19 +48,21 @@ void E_SegmentationManager::InitializeSegmentation(){
     m_volume->Update();
 
     GetMainRenderer()->AddViewProp(m_volume);
-    GetSliceRenderer()->AddViewProp(m_volume->GetImageSlice(E_Volume::SAG));
+    GetSliceRenderer()->AddViewProp(m_volume->GetImageSlice(m_currentImageSliceDirection));
     
     
     //Make Blandk Ground Truth and set
     m_mask = E_Manager::VolumeMgr()->MakeBlankGroundTruth(m_targetImage);
 
     vtkSmartPointer<vtkImageData> maskData = E_Manager::VolumeMgr()->ConvertITKtoVTKImageData(m_mask, false);
+
+    
     m_volume->SetGroundTruth(maskData);
-    m_volume->SetSlice(E_Volume::SAG, GetDialog()->GetSliderValue());
+    m_volume->SetSlice(m_currentImageSliceDirection, GetDialog()->GetSliderValue());
 
     GetMainRenderer()->AddViewProp(m_volume->GetGroundTruthVolume());
-    GetMainRenderer()->AddViewProp(m_volume->GetGroundTruthImageSlice3D(E_Volume::SAG));
-    GetSliceRenderer()->AddViewProp(m_volume->GetGroundTruthImageSlice(E_Volume::SAG));
+    GetMainRenderer()->AddViewProp(m_volume->GetGroundTruthImageSlice3D(m_currentImageSliceDirection));
+    GetSliceRenderer()->AddViewProp(m_volume->GetGroundTruthImageSlice(m_currentImageSliceDirection));
     
     
     Redraw();
@@ -86,6 +90,8 @@ vtkSmartPointer<vtkRenderer> E_SegmentationManager::GetMainRenderer(){
 vtkSmartPointer<vtkRenderer> E_SegmentationManager::GetSliceRenderer(){
     if(m_sliceRenderer == NULL){
         m_sliceRenderer = vtkSmartPointer<vtkRenderer>::New();
+        // m_sliceRenderer->GetActiveCamera()->Elevation(90.0);
+        // m_sliceRenderer->GetActiveCamera()->OrthogonalizeViewUp();
     }
 
     return m_sliceRenderer;
@@ -123,14 +129,14 @@ void E_SegmentationManager::FinishSegmentation(){
 void E_SegmentationManager::OnCloseWork(){
     //Remove Volumes From Renderer
     GetMainRenderer()->RemoveViewProp(m_volume);
-    GetSliceRenderer()->RemoveViewProp(m_volume->GetImageSlice(E_Volume::SAG));
+    GetSliceRenderer()->RemoveViewProp(m_volume->GetImageSlice(m_currentImageSliceDirection));
 
 
     //Remove Ground Truth if it is in
      if(m_mask != nullptr){
          GetMainRenderer()->RemoveViewProp(m_volume->GetGroundTruthVolume());
-         GetMainRenderer()->RemoveViewProp(m_volume->GetGroundTruthImageSlice3D(E_Volume::SAG));
-         GetSliceRenderer()->RemoveViewProp(m_volume->GetGroundTruthImageSlice(E_Volume::SAG));
+         GetMainRenderer()->RemoveViewProp(m_volume->GetGroundTruthImageSlice3D(m_currentImageSliceDirection));
+         GetSliceRenderer()->RemoveViewProp(m_volume->GetGroundTruthImageSlice(m_currentImageSliceDirection));
      }
 
      m_mask = nullptr;

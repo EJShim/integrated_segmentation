@@ -1,5 +1,6 @@
 #include "E_ImageSeries.h"
 #include <itkThresholdImageFilter.h>
+#include <itkRescaleIntensityImageFilter.h>
 
 E_ImageSeries::E_ImageSeries(std::vector<std::string> filenames){
     ///Define Reader
@@ -10,6 +11,9 @@ E_ImageSeries::E_ImageSeries(std::vector<std::string> filenames){
     m_imageContainer->SetImageIO(m_dicomIO);        
     m_imageContainer->SetFileNames(filenames);
     m_imageContainer->Update();
+    m_imageData = m_imageContainer->GetOutput();
+
+    PreprocessImageContainer();
 
     ///Add To Container
     m_groundTruth = NULL;
@@ -17,6 +21,35 @@ E_ImageSeries::E_ImageSeries(std::vector<std::string> filenames){
 
 E_ImageSeries::~E_ImageSeries(){
 
+}
+
+void E_ImageSeries::PreprocessImageContainer(){
+
+        ///Threshold image, minimum -1024;
+        itk::ThresholdImageFilter<ImageType>::Pointer clipFilter = itk::ThresholdImageFilter<ImageType>::New();
+        clipFilter->SetInput(m_imageData);
+        clipFilter->ThresholdBelow(-1000);
+        clipFilter->SetOutsideValue(-1000);
+        clipFilter->Update();
+    
+        //Maybe,, have to make new threshold filter here
+        // clipFilter->SetInput(clipFilter->GetOutput());
+        itk::ThresholdImageFilter<ImageType>::Pointer upperclipFilter = itk::ThresholdImageFilter<ImageType>::New();
+        upperclipFilter->SetInput(clipFilter->GetOutput());    
+        upperclipFilter->ThresholdAbove(2500);
+        upperclipFilter->SetOutsideValue(0);
+        upperclipFilter->Update();
+
+        using RescaleIntensityimageFilterType = itk::RescaleIntensityImageFilter<ImageType, ImageType>;
+        RescaleIntensityimageFilterType::Pointer normalizer = RescaleIntensityimageFilterType::New();
+        normalizer->SetInput(upperclipFilter->GetOutput());
+        normalizer->SetOutputMinimum(0);
+        normalizer->SetOutputMaximum(255);
+        normalizer->Update();
+
+
+
+        m_imageData = normalizer->GetOutput();
 }
 
 void E_ImageSeries::SetGroundTruth(ImageType::Pointer gtdata){
@@ -50,22 +83,6 @@ std::string E_ImageSeries::GetDicomInfo(std::string tag){
 }
 
 E_ImageSeries::ImageType::Pointer E_ImageSeries::GetImageData(){
-        ///Threshold image, minimum -1024;
-    itk::ThresholdImageFilter<ImageType>::Pointer clipFilter = itk::ThresholdImageFilter<ImageType>::New();
-    clipFilter->SetInput(GetImageContainer()->GetOutput());
-    clipFilter->ThresholdBelow(-1024);
-    clipFilter->SetOutsideValue(-1024);
-    clipFilter->Update();
-
-    //Maybe,, have to make new threshold filter here
-    // clipFilter->SetInput(clipFilter->GetOutput());
-    itk::ThresholdImageFilter<ImageType>::Pointer upperclipFilter = itk::ThresholdImageFilter<ImageType>::New();
-    upperclipFilter->SetInput(clipFilter->GetOutput());
-    upperclipFilter->ThresholdAbove(3096);
-    upperclipFilter->SetOutsideValue(0);
-    upperclipFilter->Update();
-
-
-    return upperclipFilter->GetOutput();
+    return m_imageData;
 
 }
